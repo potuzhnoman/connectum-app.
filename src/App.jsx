@@ -23,7 +23,8 @@ import {
   CheckCircle2,
   Github,
   LogOut,
-  Code2
+  Code2,
+  Mail // Added for Google Icon representation
 } from 'lucide-react';
 
 // --- Supabase Configuration ---
@@ -66,7 +67,7 @@ const getFlagAndCountry = (language) => {
 // --- Components ---
 
 // 1. Navigation Bar with Stats HUD
-const Navbar = ({ onOpenModal, xp, level, xpProgress, session, onLogin, onLogout }) => {
+const Navbar = ({ onOpenModal, xp, level, xpProgress, session, onLoginGithub, onLoginGoogle, onLogout }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -147,13 +148,23 @@ const Navbar = ({ onOpenModal, xp, level, xpProgress, session, onLogin, onLogout
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-4 pl-8 border-l border-slate-800">
+            <div className="flex items-center gap-3 pl-8 border-l border-slate-800">
+               {/* Google Login */}
                <button 
-                 onClick={onLogin}
+                 onClick={onLoginGoogle}
+                 className="flex items-center justify-center w-10 h-10 bg-white hover:bg-slate-200 text-slate-900 rounded-xl transition-all shadow-lg"
+                 title="Login with Google"
+               >
+                 <Mail className="w-5 h-5" />
+               </button>
+
+               {/* GitHub Login */}
+               <button 
+                 onClick={onLoginGithub}
                  className="flex items-center gap-2 px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold rounded-xl border border-slate-700 transition-all group hover:border-cyan-500/50"
                >
                  <Github className="w-4 h-4 group-hover:text-cyan-400 transition-colors" />
-                 Login with GitHub
+                 Login
                </button>
             </div>
           )}
@@ -187,9 +198,14 @@ const Navbar = ({ onOpenModal, xp, level, xpProgress, session, onLogin, onLogout
               </button>
             </>
           ) : (
-            <button onClick={() => { onLogin(); setMobileMenuOpen(false); }} className="w-full py-3 bg-slate-800 text-white rounded-lg font-bold flex items-center justify-center gap-2">
-              <Github className="w-5 h-5" /> Login with GitHub
-            </button>
+            <div className="flex flex-col gap-3">
+              <button onClick={() => { onLoginGoogle(); setMobileMenuOpen(false); }} className="w-full py-3 bg-white text-slate-900 rounded-lg font-bold flex items-center justify-center gap-2">
+                <Mail className="w-5 h-5" /> Login with Google
+              </button>
+              <button onClick={() => { onLoginGithub(); setMobileMenuOpen(false); }} className="w-full py-3 bg-slate-800 text-white rounded-lg font-bold flex items-center justify-center gap-2">
+                <Github className="w-5 h-5" /> Login with GitHub
+              </button>
+            </div>
           )}
         </div>
       )}
@@ -248,7 +264,7 @@ const XPToast = ({ message, isVisible }) => {
 };
 
 // 4. Question Card Component
-const QuestionCard = ({ data, onSubmitAnswer, session, onLogin }) => {
+const QuestionCard = ({ data, onSubmitAnswer, session, onLoginGithub, onLoginGoogle }) => {
   const [translated, setTranslated] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isSimulatingAI, setIsSimulatingAI] = useState(data.isNew || false);
@@ -267,7 +283,6 @@ const QuestionCard = ({ data, onSubmitAnswer, session, onLogin }) => {
   const handleAnswerSubmit = () => {
     if (!session) {
       alert("Please login to answer questions.");
-      onLogin();
       return;
     }
     if (!answerText.trim()) return;
@@ -403,11 +418,16 @@ const QuestionCard = ({ data, onSubmitAnswer, session, onLogin }) => {
           {/* New Answer Input */}
           <div className="relative group/input">
             {!session && (
-              <div className="absolute inset-0 z-20 bg-slate-950/80 backdrop-blur-[2px] flex flex-col items-center justify-center rounded-xl border border-slate-800">
-                 <p className="text-slate-400 text-sm mb-3">Join the HiveMind to answer</p>
-                 <button onClick={onLogin} className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-bold rounded-lg transition-all shadow-lg shadow-cyan-500/20">
-                   <Github className="w-3 h-3" /> Login
-                 </button>
+              <div className="absolute inset-0 z-20 bg-slate-950/90 backdrop-blur-sm flex flex-col items-center justify-center rounded-xl border border-slate-800">
+                 <p className="text-slate-300 text-sm mb-4 font-bold">Join the HiveMind to answer</p>
+                 <div className="flex gap-3">
+                   <button onClick={onLoginGoogle} className="flex items-center gap-2 px-4 py-2 bg-white text-slate-900 text-xs font-bold rounded-lg transition-all hover:bg-slate-100">
+                     <Mail className="w-3 h-3" /> Google
+                   </button>
+                   <button onClick={onLoginGithub} className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white text-xs font-bold rounded-lg transition-all hover:bg-slate-700">
+                     <Github className="w-3 h-3" /> GitHub
+                   </button>
+                 </div>
               </div>
             )}
             <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 rounded-xl blur-md opacity-0 group-focus-within/input:opacity-100 transition-opacity duration-500 -z-10" />
@@ -437,7 +457,7 @@ const QuestionCard = ({ data, onSubmitAnswer, session, onLogin }) => {
 };
 
 // 5. Modal Component
-const AskQuestionModal = ({ isOpen, onClose, onSubmit, session, onLogin }) => {
+const AskQuestionModal = ({ isOpen, onClose, onSubmit, session, onLoginGithub, onLoginGoogle }) => {
   const [formData, setFormData] = useState({ title: '', language: 'English', details: '' });
   
   if (!isOpen) return null;
@@ -446,7 +466,6 @@ const AskQuestionModal = ({ isOpen, onClose, onSubmit, session, onLogin }) => {
     e.preventDefault();
     if (!session) {
       alert("Please login to post a question.");
-      onLogin();
       return;
     }
     if (!formData.title) return;
@@ -485,13 +504,22 @@ const AskQuestionModal = ({ isOpen, onClose, onSubmit, session, onLogin }) => {
         {!session ? (
           <div className="text-center py-6 bg-slate-950/50 rounded-2xl border border-white/5 p-6">
              <p className="text-slate-300 mb-6">You must be logged in to broadcast a question to the global network.</p>
-             <button 
-                 onClick={onLogin}
-                 className="flex items-center justify-center gap-2 w-full px-5 py-4 bg-white text-slate-950 font-bold rounded-xl hover:bg-cyan-50 transition-all shadow-lg shadow-white/10"
-               >
-                 <Github className="w-5 h-5" />
-                 Login with GitHub to Continue
-             </button>
+             <div className="space-y-3">
+               <button 
+                   onClick={onLoginGoogle}
+                   className="flex items-center justify-center gap-2 w-full px-5 py-4 bg-white text-slate-950 font-bold rounded-xl hover:bg-gray-100 transition-all shadow-lg"
+                 >
+                   <Mail className="w-5 h-5" />
+                   Login with Google
+               </button>
+               <button 
+                   onClick={onLoginGithub}
+                   className="flex items-center justify-center gap-2 w-full px-5 py-4 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl border border-slate-700 transition-all"
+                 >
+                   <Github className="w-5 h-5" />
+                   Login with GitHub
+               </button>
+             </div>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -792,7 +820,7 @@ const App = () => {
   };
 
   // --- Auth Actions ---
-  const handleLogin = async () => {
+  const handleLoginGithub = async () => {
     if (!supabase) return;
     try {
       await supabase.auth.signInWithOAuth({
@@ -802,7 +830,22 @@ const App = () => {
         }
       });
     } catch (error) {
-      console.error("Login failed:", error);
+      console.error("GitHub Login failed:", error);
+      alert("Login failed. Check console.");
+    }
+  };
+
+  const handleLoginGoogle = async () => {
+    if (!supabase) return;
+    try {
+      await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin
+        }
+      });
+    } catch (error) {
+      console.error("Google Login failed:", error);
       alert("Login failed. Check console.");
     }
   };
@@ -950,6 +993,21 @@ const App = () => {
         .animate-bounce-in {
           animation: bounce-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
+        @keyframes orbit-1 {
+          0% { transform: rotate(0deg) translateX(120px) rotate(0deg); }
+          100% { transform: rotate(360deg) translateX(120px) rotate(-360deg); }
+        }
+        @keyframes orbit-2 {
+          0% { transform: rotate(120deg) translateX(150px) rotate(-120deg); }
+          100% { transform: rotate(480deg) translateX(150px) rotate(-480deg); }
+        }
+        @keyframes orbit-3 {
+          0% { transform: rotate(240deg) translateX(100px) rotate(-240deg); }
+          100% { transform: rotate(600deg) translateX(100px) rotate(-600deg); }
+        }
+        .animate-orbit-1 { animation: orbit-1 20s linear infinite; }
+        .animate-orbit-2 { animation: orbit-2 25s linear infinite; }
+        .animate-orbit-3 { animation: orbit-3 18s linear infinite; }
       `}</style>
 
       {/* Navbar with RPG HUD */}
@@ -959,12 +1017,13 @@ const App = () => {
         level={userLevel} 
         xpProgress={levelProgress} 
         session={session}
-        onLogin={handleLogin}
+        onLoginGithub={handleLoginGithub}
+        onLoginGoogle={handleLoginGoogle}
         onLogout={handleLogout}
       />
       
       <main>
-        <Hero onOpenModal={() => setIsModalOpen(true)} onLogin={handleLogin} />
+        <Hero onOpenModal={() => setIsModalOpen(true)} onLogin={() => setIsModalOpen(true)} />
         <LanguageTicker />
         
         {/* Question Feed */}
@@ -999,7 +1058,8 @@ const App = () => {
                       data={q} 
                       onSubmitAnswer={handleSubmitAnswer}
                       session={session}
-                      onLogin={handleLogin}
+                      onLoginGithub={handleLoginGithub}
+                      onLoginGoogle={handleLoginGoogle}
                     />
                   ))
                 )}
@@ -1053,7 +1113,8 @@ const App = () => {
         onClose={() => setIsModalOpen(false)} 
         onSubmit={handleAddQuestion} 
         session={session}
-        onLogin={handleLogin}
+        onLoginGithub={handleLoginGithub}
+        onLoginGoogle={handleLoginGoogle}
       />
     </div>
   );
