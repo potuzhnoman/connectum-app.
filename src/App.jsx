@@ -22,10 +22,14 @@ import {
   User as UserIcon
 } from 'lucide-react';
 
-// --- 1. НАСТРОЙКА БАЗЫ ДАННЫХ (ЖЕЛЕЗОБЕТОННАЯ) ---
-// Мы создаем клиента ОДИН РАЗ здесь. Больше никаких new Client внутри App.
-const supabaseUrl = "https://hwzlhbcuqbsnrtfmnmpu.supabase.co";
-const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh3emxoYmN1cWJzbnJ0Zm1ubXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQyNDQ1NjEsImV4cCI6MjA3OTgyMDU2MX0.W743aZZ-XuyS-vY7cPBz9_cAjz_8s4SCvJ6gpCkERCw";
+// --- 1. ПРАВИЛЬНАЯ НАСТРОЙКА (ЧЕРЕЗ .ENV) ---
+// Код сам возьмет ключи из файла .env. Руками ничего писать не надо.
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error("⛔ ОШИБКА: Ключи Supabase не найдены! Проверь файл .env и перезапусти сервер.");
+}
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
