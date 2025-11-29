@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+// Changed to ESM import for preview compatibility
 import { createClient } from '@supabase/supabase-js';
 import { 
   Globe, 
@@ -24,13 +25,17 @@ import {
   Github,
   LogOut,
   Code2,
-  Mail 
+  Mail,
+  Crown,
+  Medal
 } from 'lucide-react';
 
-// --- CORE RULE 1: Supabase Configuration (Vite Env Variables) ---
-// Initialized globally. Assumes .env file is present and correct.
+// --- CORE RULE 1: Supabase Configuration ---
+// NOTE: In this preview environment, import.meta.env is not available.
+// Please replace the strings below with your actual Supabase URL and Anon Key.
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // --- Helpers ---
@@ -64,7 +69,7 @@ const getFlagAndCountry = (language) => {
 // --- Components ---
 
 // 1. Navigation Bar with Stats HUD
-const Navbar = ({ onOpenModal, xp, level, xpProgress, session, onLoginGithub, onLoginGoogle, onLogout }) => {
+const Navbar = ({ onOpenModal, onOpenLeaderboard, xp, level, xpProgress, session, onLoginGithub, onLoginGoogle, onLogout }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -97,10 +102,20 @@ const Navbar = ({ onOpenModal, xp, level, xpProgress, session, onLoginGithub, on
               {item}
             </a>
           ))}
+
+          {/* Leaderboard Trigger */}
+          <button 
+            onClick={onOpenLeaderboard}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 hover:bg-amber-500/20 transition-all"
+            title="Global Leaderboard"
+          >
+            <Trophy className="w-4 h-4" />
+            <span className="text-xs font-bold uppercase tracking-wide">Leaders</span>
+          </button>
           
           {/* User Section */}
           {session ? (
-            <div className="flex items-center gap-4 pl-8 border-l border-slate-800">
+            <div className="flex items-center gap-4 pl-4 border-l border-slate-800">
               {/* Stats */}
               <div className="flex flex-col items-end">
                 <div className="flex items-center gap-2 mb-1">
@@ -186,6 +201,9 @@ const Navbar = ({ onOpenModal, xp, level, xpProgress, session, onLoginGithub, on
               </div>
               <button onClick={() => { onOpenModal(); setMobileMenuOpen(false); }} className="w-full py-3 bg-cyan-600 text-white rounded-lg font-bold">
                 Ask Question
+              </button>
+              <button onClick={() => { onOpenLeaderboard(); setMobileMenuOpen(false); }} className="w-full py-3 bg-amber-600/20 text-amber-400 border border-amber-600/50 rounded-lg font-bold flex items-center justify-center gap-2">
+                <Trophy className="w-4 h-4" /> Leaderboard
               </button>
               <button onClick={() => { onLogout(); setMobileMenuOpen(false); }} className="w-full py-3 bg-slate-800 text-slate-300 rounded-lg font-bold">
                 Log Out
@@ -450,9 +468,9 @@ const QuestionCard = ({ data, onSubmitAnswer, session, onLoginGithub, onLoginGoo
   );
 };
 
-// 5. Modal Component
+// 5. Ask Question Modal Component
 const AskQuestionModal = ({ isOpen, onClose, onSubmit, session, onLoginGithub, onLoginGoogle }) => {
-  const [formData, setFormData] = useState({ title: '', language: 'English', details: '' });
+  const [formData, setFormData] = useState({ title: '', language: 'English', category: 'Technology', details: '' });
   
   if (!isOpen) return null;
 
@@ -464,7 +482,7 @@ const AskQuestionModal = ({ isOpen, onClose, onSubmit, session, onLoginGithub, o
     }
     if (!formData.title) return;
     onSubmit(formData);
-    setFormData({ title: '', language: 'English', details: '' }); // Reset
+    setFormData({ title: '', language: 'English', category: 'Technology', details: '' }); // Reset
   };
 
   return (
@@ -521,7 +539,7 @@ const AskQuestionModal = ({ isOpen, onClose, onSubmit, session, onLoginGithub, o
               <label className="block text-xs font-bold text-cyan-400 uppercase tracking-widest">Question</label>
               <input 
                 type="text" 
-                placeholder="e.g. Best framework for 3D web apps?" 
+                placeholder="e.g. Best strategies for..." 
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-4 text-white placeholder:text-slate-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-lg"
                 value={formData.title}
                 onChange={(e) => setFormData({...formData, title: e.target.value})}
@@ -554,11 +572,17 @@ const AskQuestionModal = ({ isOpen, onClose, onSubmit, session, onLoginGithub, o
                <div className="space-y-2">
                 <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest">Category</label>
                 <div className="relative">
-                  <select className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-500 transition-all appearance-none">
-                    <option>Technology</option>
-                    <option>Science</option>
-                    <option>Art</option>
+                  <select 
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-500 transition-all appearance-none"
+                    value={formData.category}
+                    onChange={(e) => setFormData({...formData, category: e.target.value})}
+                  >
+                    <option>Life & Advice</option>
+                    <option>School & Education</option>
                     <option>Gaming</option>
+                    <option>Technology</option>
+                    <option>Relationships</option>
+                    <option>Art & Music</option>
                   </select>
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
                     <Code2 className="w-4 h-4 text-slate-500" />
@@ -595,7 +619,125 @@ const AskQuestionModal = ({ isOpen, onClose, onSubmit, session, onLoginGithub, o
   );
 };
 
-// 6. Visual Hook (Premium Complex SoftSphere)
+// 6. NEW: Leaderboard Modal Component
+const LeaderboardModal = ({ isOpen, onClose }) => {
+  const [leaders, setLeaders] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchLeaders();
+    }
+  }, [isOpen]);
+
+  const fetchLeaders = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*') // Assuming standard profile fields: id, full_name, avatar_url, xp
+        .order('xp', { ascending: false })
+        .limit(10);
+      
+      if (error) throw error;
+      setLeaders(data || []);
+    } catch (err) {
+      console.error("Error fetching leaderboard:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+      <div 
+        className="absolute inset-0 bg-slate-950/90 backdrop-blur-xl transition-opacity" 
+        onClick={onClose}
+      />
+      
+      <div className="relative w-full max-w-md bg-slate-900 border border-amber-500/20 rounded-3xl shadow-[0_0_80px_rgba(245,158,11,0.15)] p-0 animate-scale-in overflow-hidden flex flex-col max-h-[80vh]">
+        
+        {/* Header */}
+        <div className="p-6 pb-4 border-b border-white/5 bg-gradient-to-b from-amber-500/10 to-transparent relative">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent opacity-50" />
+          <button 
+            onClick={onClose}
+            className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-full"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-amber-500/20 rounded-xl border border-amber-500/30">
+               <Trophy className="w-6 h-6 text-amber-400" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-white">Top Nodes</h2>
+              <p className="text-xs text-amber-500/70 font-bold uppercase tracking-widest">Global Ranking</p>
+            </div>
+          </div>
+        </div>
+
+        {/* List */}
+        <div className="overflow-y-auto p-4 space-y-2 custom-scrollbar">
+          {loading ? (
+             <div className="flex flex-col items-center justify-center py-10">
+                <Loader2 className="w-8 h-8 text-amber-500 animate-spin mb-2" />
+                <p className="text-xs text-slate-500 font-mono">CALCULATING RANK...</p>
+             </div>
+          ) : (
+            leaders.map((user, index) => {
+              const rank = index + 1;
+              let rankStyle = "bg-slate-800 text-slate-400 border-slate-700";
+              let icon = null;
+
+              if (rank === 1) {
+                rankStyle = "bg-yellow-500/20 text-yellow-300 border-yellow-500/50 shadow-[0_0_15px_rgba(234,179,8,0.2)]";
+                icon = <Crown className="w-3 h-3 text-yellow-400 absolute -top-1 -right-1 transform rotate-12" />;
+              } else if (rank === 2) {
+                rankStyle = "bg-slate-300/20 text-slate-300 border-slate-400/50";
+              } else if (rank === 3) {
+                rankStyle = "bg-orange-700/20 text-orange-300 border-orange-700/50";
+              }
+
+              return (
+                <div key={user.id} className="flex items-center gap-4 p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors group">
+                  <div className={`relative w-8 h-8 flex items-center justify-center rounded-lg border font-bold text-sm ${rankStyle}`}>
+                    {rank}
+                    {icon}
+                  </div>
+                  
+                  <div className="w-10 h-10 rounded-full bg-slate-800 overflow-hidden ring-2 ring-white/10 group-hover:ring-cyan-500/50 transition-all">
+                    <img 
+                      src={user.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.full_name}`} 
+                      alt={user.full_name} 
+                      className="w-full h-full object-cover" 
+                    />
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-sm font-bold text-white truncate">{user.full_name || 'Anonymous Node'}</h4>
+                    <p className="text-[10px] text-slate-500 truncate">Node ID: {user.id.slice(0, 8)}...</p>
+                  </div>
+
+                  <div className="text-right">
+                    <span className="block text-sm font-bold text-amber-400">{user.xp} XP</span>
+                    <span className="text-[10px] text-slate-600 uppercase font-bold">Lvl {Math.floor(user.xp / 1000) + 1}</span>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+// 7. Visual Hook (Premium Complex SoftSphere)
 const SoftSphere = () => {
   return (
     <div className="relative w-full h-[500px] md:h-[600px] flex items-center justify-center perspective-1000">
@@ -640,7 +782,7 @@ const SoftSphere = () => {
   );
 };
 
-// 7. Hero Section
+// 8. Hero Section
 const Hero = ({ onOpenModal, onLogin }) => {
   return (
     <section className="relative pt-32 pb-20 px-6 flex flex-col items-center justify-center overflow-hidden">
@@ -676,8 +818,8 @@ const Hero = ({ onOpenModal, onLogin }) => {
               </span>
             </h1>
             <p className="text-xl md:text-2xl text-slate-300 max-w-xl leading-relaxed font-light">
-              Ask in <span className="text-white font-semibold border-b border-cyan-500/50">Ukrainian</span>, get answers from <span className="text-white font-semibold border-b border-purple-500/50">Japan</span>. 
-              The first AI-bridged knowledge network.
+              Ask about <span className="text-white font-semibold border-b border-cyan-500/50">Life</span> or <span className="text-white font-semibold border-b border-purple-500/50">Tech</span>. 
+              Get answers from everywhere.
             </p>
           </div>
 
@@ -730,6 +872,7 @@ const Hero = ({ onOpenModal, onLogin }) => {
 const App = () => {
   const [session, setSession] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [userXP, setUserXP] = useState(0); 
   const [toastMessage, setToastMessage] = useState(null);
   const [questions, setQuestions] = useState([]);
@@ -899,6 +1042,7 @@ const App = () => {
       const newQuestionPayload = {
         text: formData.title,
         language: formData.language,
+        category: formData.category, // Added category to payload (assuming DB supports it, if not it will ignore)
         author_name: session.user.user_metadata.full_name || session.user.email,
         xp_reward: 50
       };
@@ -1034,6 +1178,7 @@ const App = () => {
       {/* Navbar with RPG HUD */}
       <Navbar 
         onOpenModal={() => setIsModalOpen(true)} 
+        onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
         xp={userXP} 
         level={userLevel} 
         xpProgress={levelProgress} 
@@ -1125,7 +1270,7 @@ const App = () => {
         isVisible={!!toastMessage} 
       />
 
-      {/* Modal Overlay */}
+      {/* Modals */}
       <AskQuestionModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
@@ -1134,11 +1279,15 @@ const App = () => {
         onLoginGithub={handleLoginGithub}
         onLoginGoogle={handleLoginGoogle}
       />
+      
+      <LeaderboardModal 
+        isOpen={isLeaderboardOpen}
+        onClose={() => setIsLeaderboardOpen(false)}
+      />
     </div>
   );
 };
 
 export default App;
-
 
 // update
