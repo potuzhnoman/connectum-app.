@@ -80,7 +80,7 @@ const Navbar = ({ onOpenModal, xp, level, xpProgress, session, onLoginGithub, on
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b ${
       isScrolled 
-        ? 'bg-slate-950/80 backdrop-blur-xl border-cyan-500/20 py-3 shadow-[0_0_20px_rgba(6,182,212,0.1)]' 
+        ? 'bg-slate-900/80 backdrop-blur-xl border-cyan-500/20 py-3 shadow-[0_0_20px_rgba(6,182,212,0.1)]' 
         : 'bg-transparent border-transparent py-5'
     }`}>
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
@@ -225,7 +225,7 @@ const LanguageTicker = () => {
   ];
 
   return (
-    <div className="w-full bg-slate-950/30 border-y border-white/5 overflow-hidden py-3 backdrop-blur-sm relative z-20">
+    <div className="w-full bg-slate-900/50 border-y border-white/5 overflow-hidden py-3 backdrop-blur-sm relative z-20">
       <div className="flex w-[200%] animate-marquee">
         {[...connections, ...connections, ...connections].map((conn, i) => (
           <div key={i} className="flex items-center gap-3 px-12 opacity-60 hover:opacity-100 transition-opacity cursor-default">
@@ -734,9 +734,10 @@ const Hero = ({ onOpenModal, onLogin }) => {
 // --- Main App Component ---
 
 const App = () => {
+  const [supabase, setSupabase] = useState(null);
   const [session, setSession] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [userXP, setUserXP] = useState(120);
+  const [userXP, setUserXP] = useState(0); // Initialize with 0
   const [toastMessage, setToastMessage] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -745,34 +746,70 @@ const App = () => {
   const userLevel = Math.floor(userXP / 1000) + 1;
   const levelProgress = ((userXP % 1000) / 1000) * 100;
 
-  // --- Initialize Session with Global Supabase ---
+  // --- Initialize Supabase via Script Injection (Resolves build error) ---
   useEffect(() => {
-    if (!supabase) {
+    // If keys are missing, stop loading
+    if (SUPABASE_URL === "YOUR_SUPABASE_URL_HERE") {
       setLoading(false);
       return;
     }
 
-    // Initial Session Check
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
+    const initSupabase = () => {
+      if (window.supabase) {
+        const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        setSupabase(client);
+        
+        // Initial Session Check
+        client.auth.getSession().then(({ data: { session } }) => {
+          setSession(session);
+        });
 
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
+        // Listen for auth changes
+        client.auth.onAuthStateChange((_event, session) => {
+          setSession(session);
+        });
+      }
+    };
 
-    return () => subscription.unsubscribe();
+    if (window.supabase) {
+      initSupabase();
+    } else {
+      const script = document.createElement("script");
+      script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+      script.async = true;
+      script.onload = initSupabase;
+      document.body.appendChild(script);
+    }
   }, []);
+
+  // --- Fetch Profile Data on Session Change ---
+  useEffect(() => {
+    if (session && supabase) {
+      const fetchProfile = async () => {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+
+        if (data) {
+          setUserXP(data.xp || 0);
+        } else if (error) {
+          console.error("Error fetching profile:", error);
+        }
+      };
+      fetchProfile();
+    } else {
+      setUserXP(0); // Reset XP if no session
+    }
+  }, [session, supabase]);
 
   // --- Data Fetching ---
   useEffect(() => {
     if (supabase) {
       fetchQuestions();
     }
-  }, []);
+  }, [supabase]); 
 
   const fetchQuestions = async () => {
     try {
@@ -792,11 +829,9 @@ const App = () => {
           name: q.author_name || 'Anonymous',
           country: country,
           flag: flag,
-          // Fallback avatar handling
           avatarUrl: q.author_avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${q.author_name}`,
           timeAgo: formatTimeAgo(q.created_at),
           questionOriginal: q.text,
-          // Mock translation for now (real app would use a translation API column)
           questionTranslated: q.text + " (AI Translated)", 
           xp: q.xp_reward || 0,
           comments: q.replies ? q.replies.length : 0,
@@ -860,17 +895,38 @@ const App = () => {
     }
   };
 
-  // Gamification Logic
-  const handleAddXP = (amount, reason) => {
-    setUserXP(prev => prev + amount);
+  // Gamification Logic with Persistence
+  const handleAddXP = async (amount, reason) => {
+    // 1. Calculate new XP
+    const newXP = userXP + amount;
+    
+    // 2. Optimistic UI Update
+    setUserXP(newXP);
     setToastMessage(`+${amount} XP - ${reason}`);
     setTimeout(() => setToastMessage(null), 3000);
+
+    // 3. Persist to Database
+    if (session && supabase) {
+      try {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ xp: newXP })
+          .eq('id', session.user.id);
+        
+        if (error) {
+          console.error("Error updating XP:", error);
+          // Optional: Revert local state on error if strict consistency is needed
+        }
+      } catch (err) {
+        console.error("Failed to persist XP:", err);
+      }
+    }
   };
 
   const handleAddQuestion = async (formData) => {
     try {
       if (!supabase) {
-        alert("Supabase client not initialized.");
+        alert("Please paste your Supabase keys in the code to post.");
         return;
       }
       
@@ -894,7 +950,6 @@ const App = () => {
       if (error) throw error;
 
       if (data && data.length > 0) {
-        // Refresh feed to get proper DB structure and IDs
         fetchQuestions(); 
         handleAddXP(50, "Posted Question");
         setIsModalOpen(false);
@@ -929,7 +984,6 @@ const App = () => {
       if (error) throw error;
 
       if (data && data.length > 0) {
-        // Refresh feed to show new reply
         fetchQuestions();
         handleAddXP(100, "Solution Provided");
       }
@@ -940,28 +994,35 @@ const App = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-cyan-500/30 selection:text-cyan-200 overflow-x-hidden">
+    <div className="min-h-screen bg-slate-900 text-slate-200 font-sans selection:bg-indigo-500/30 selection:text-white">
       <style>{`
         @keyframes marquee {
           0% { transform: translateX(0); }
           100% { transform: translateX(-50%); }
         }
         .animate-marquee {
-          animation: marquee 30s linear infinite;
+          animation: marquee 40s linear infinite;
         }
         @keyframes slow-spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
         .animate-slow-spin {
-          animation: slow-spin 20s linear infinite;
+          animation: slow-spin 30s linear infinite;
         }
-        @keyframes counter-spin {
-          from { transform: rotate(360deg); }
-          to { transform: rotate(0deg); }
+        @keyframes bounce-slow {
+          0%, 100% { transform: translateY(-10px); }
+          50% { transform: translateY(10px); }
         }
-        .animate-counter-spin {
-          animation: counter-spin 20s linear infinite;
+        .animate-bounce-slow {
+          animation: bounce-slow 4s ease-in-out infinite;
+        }
+         @keyframes bounce-delayed {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-15px); }
+        }
+        .animate-bounce-delayed {
+          animation: bounce-delayed 5s ease-in-out infinite 1s;
         }
         @keyframes slide-in-top {
           0% { transform: translateY(-20px); opacity: 0; }
@@ -1023,32 +1084,29 @@ const App = () => {
       />
       
       <main>
-        <Hero onOpenModal={() => setIsModalOpen(true)} onLogin={() => setIsModalOpen(true)} />
+        <Hero onOpenModal={() => setIsModalOpen(true)} onLogin={handleLoginGithub} />
         <LanguageTicker />
         
         {/* Question Feed */}
         <section className="py-24 px-6 relative z-10">
-          {/* Section Background Decor */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-5xl h-full bg-cyan-900/10 blur-[100px] -z-10 rounded-full mix-blend-screen" />
-
           <div className="max-w-3xl mx-auto">
-            <div className="text-center mb-16 animate-fade-in">
+            <div className="text-center mb-12">
               <h2 className="text-3xl font-bold text-white mb-3">Live Questions</h2>
               <p className="text-slate-400">Real-time knowledge exchange happening right now.</p>
             </div>
 
             {loading ? (
               <div className="flex flex-col items-center justify-center py-20">
-                <Loader2 className="w-12 h-12 text-cyan-500 animate-spin mb-4" />
+                <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mb-4" />
                 <p className="text-slate-500 font-mono text-sm">SYNCING WITH HIVE MIND...</p>
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {questions.length === 0 ? (
-                  <div className="text-center py-10 text-slate-500 bg-slate-900/30 rounded-3xl border border-white/5 p-8 backdrop-blur-sm">
+                  <div className="text-center py-10 text-slate-500 bg-slate-800/20 rounded-xl border border-slate-700 p-8">
                      <p className="mb-2">No questions detected in the stream.</p>
-                     {!supabaseUrl && (
-                       <p className="text-amber-400 text-xs">⚠️ Supabase keys missing. Check .env file.</p>
+                     {SUPABASE_URL === "YOUR_SUPABASE_URL_HERE" && (
+                       <p className="text-amber-400 text-xs">⚠️ Supabase keys missing. Update code with your URL & Key.</p>
                      )}
                   </div>
                 ) : (
@@ -1066,8 +1124,8 @@ const App = () => {
               </div>
             )}
             
-            <div className="mt-12 text-center">
-              <button className="text-sm font-bold text-slate-500 hover:text-cyan-400 transition-colors flex items-center justify-center gap-2 mx-auto">
+            <div className="mt-8 text-center">
+              <button className="text-sm font-medium text-slate-500 hover:text-indigo-400 transition-colors flex items-center justify-center gap-2 mx-auto">
                 View Global Feed <ArrowRight className="w-4 h-4" />
               </button>
             </div>
@@ -1076,10 +1134,10 @@ const App = () => {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-white/10 bg-slate-950/80 backdrop-blur-xl py-12 px-6">
+      <footer className="border-t border-slate-800 bg-slate-900 py-12 px-6">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-2">
-             <Cpu className="w-5 h-5 text-cyan-500" />
+             <Cpu className="w-5 h-5 text-indigo-500" />
              <span className="text-base font-bold text-slate-400">Connectum.</span>
           </div>
           <div className="flex gap-8 text-sm text-slate-500">
@@ -1096,7 +1154,7 @@ const App = () => {
       {/* FAB */}
       <button 
         onClick={() => setIsModalOpen(true)}
-        className="fixed bottom-8 right-8 z-40 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-transform shadow-cyan-500/40"
+        className="fixed bottom-8 right-8 z-40 bg-indigo-600 hover:bg-indigo-500 text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-transform shadow-indigo-500/40"
       >
         <Plus className="w-6 h-6" />
       </button>
@@ -1123,6 +1181,4 @@ const App = () => {
 export default App;
 
 
-
 // update
-
