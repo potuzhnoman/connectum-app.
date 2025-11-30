@@ -970,6 +970,73 @@ const App = () => {
     }
   };
 
+  // --- Realtime Subscriptions (INSERT Only) ---
+  useEffect(() => {
+    if (!supabase) return;
+
+    const channel = supabase
+      .channel('realtime_feed')
+      // Listener for New Questions
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'questions' }, (payload) => {
+        const newQ = payload.new;
+        const { flag, country } = getFlagAndCountry(newQ.language);
+        
+        const formattedQuestion = {
+          id: newQ.id,
+          name: newQ.author_name || 'Anonymous',
+          country: country,
+          flag: flag,
+          avatarUrl: newQ.author_avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${newQ.author_name}`,
+          timeAgo: 'Just now', // Realtime items are always fresh
+          questionOriginal: newQ.text,
+          questionTranslated: newQ.text + " (AI Translated)", 
+          xp: newQ.xp_reward || 0,
+          comments: 0,
+          replies: [],
+          isNew: true // Triggers animation
+        };
+
+        setQuestions((prev) => [formattedQuestion, ...prev]);
+        
+        // Show notification
+        setToastMessage(`New Question Detected: ${country} node active`);
+        setTimeout(() => setToastMessage(null), 4000);
+      })
+      // Listener for New Replies
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'replies' }, (payload) => {
+        const newReply = payload.new;
+        const formattedReply = {
+          id: newReply.id,
+          author: newReply.author_name,
+          text: newReply.text,
+          time: 'Just now',
+          avatar: newReply.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${newReply.author_name}`
+        };
+
+        setQuestions((prevQuestions) => 
+          prevQuestions.map((q) => {
+            if (q.id === newReply.question_id) {
+              return {
+                ...q,
+                comments: (q.replies ? q.replies.length : 0) + 1,
+                // Append new reply to the top of replies list
+                replies: [formattedReply, ...(q.replies || [])]
+              };
+            }
+            return q;
+          })
+        );
+
+        setToastMessage(`New Solution Verified`);
+        setTimeout(() => setToastMessage(null), 4000);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [supabase]);
+
   // --- Auth Actions ---
   const handleLoginGithub = async () => {
     if (!supabase) return;
@@ -1062,7 +1129,8 @@ const App = () => {
       if (error) throw error;
 
       if (data && data.length > 0) {
-        fetchQuestions(); 
+        // No need to fetchQuestions() because realtime subscription handles it!
+        // Just handle local XP update
         handleAddXP(50, "Posted Question");
         setIsModalOpen(false);
       }
@@ -1099,7 +1167,7 @@ const App = () => {
       if (error) throw error;
 
       if (data && data.length > 0) {
-        fetchQuestions();
+        // No need to fetchQuestions() because realtime subscription handles it!
         handleAddXP(100, "Solution Provided");
       }
     } catch (error) {
