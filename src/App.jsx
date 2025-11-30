@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js'; // Нормальный импорт
+import { createClient } from '@supabase/supabase-js';
 import { 
   Globe, Zap, MessageCircle, Cpu, ArrowRight, ShieldCheck, Activity, Languages, 
   Menu, X, Sparkles, MessageSquare, ThumbsUp, Share2, Plus, Loader2, Send, 
-  Trophy, User, CheckCircle2, Github, LogOut, Code2, Mail, Crown, Medal 
+  Trophy, User, CheckCircle2, Github, LogOut, Code2, Mail, Crown, Medal, AlertTriangle,
+  Calendar, Hash
 } from 'lucide-react';
 
-// --- Supabase Configuration (Correct) ---
+// --- Supabase Configuration ---
+// Reverted to using import.meta.env as requested.
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
@@ -470,11 +472,13 @@ const AskQuestionModal = ({ isOpen, onClose, onSubmit, session, onLoginGithub, o
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-slate-950/80 backdrop-blur-md transition-opacity" 
         onClick={onClose}
       />
       
+      {/* Modal Content */}
       <div className="relative w-full max-w-lg bg-slate-900 border border-white/10 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.5)] p-8 animate-scale-in overflow-hidden max-h-[90vh] overflow-y-auto custom-scrollbar">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500 via-purple-500 to-cyan-500" />
         
@@ -1349,7 +1353,7 @@ const App = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-indigo-500/30 selection:text-white overflow-x-hidden w-full">
+    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-indigo-500/30 selection:text-white">
       <style>{`
         @keyframes marquee {
           0% { transform: translateX(0); }
