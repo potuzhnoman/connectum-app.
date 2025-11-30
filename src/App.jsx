@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 
 // --- Supabase Configuration ---
-// Reverted to using import.meta.env as requested.
+// Strict configuration using Vite environment variables.
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
@@ -628,18 +628,16 @@ const UserProfileModal = ({ isOpen, onClose, userId, supabase }) => {
       if (profileError) throw profileError;
       setProfile(profileData);
 
-      // 2. Fetch History (Assuming author_id exists or filtering by logic)
-      // Note: If 'author_id' was not previously saved, this might return empty for old posts.
-      // We are adding author_id to new posts in handleAddQuestion now.
+      // 2. Fetch History
       const { data: historyData, error: historyError } = await supabase
         .from('questions')
         .select('*')
-        .eq('author_id', userId) // We need to ensure we save author_id in questions table
+        .eq('author_id', userId)
         .order('created_at', { ascending: false })
         .limit(5);
 
       if (historyError) {
-         console.warn("Could not fetch history (column might be missing):", historyError);
+         console.warn("Could not fetch history:", historyError);
          setHistory([]);
       } else {
          setHistory(historyData || []);
@@ -979,7 +977,6 @@ const Hero = ({ onOpenModal, onLogin }) => {
 // --- Main App Component ---
 
 const App = () => {
-  const [supabase, setSupabase] = useState(null);
   const [session, setSession] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
@@ -992,7 +989,6 @@ const App = () => {
   const [toastMessage, setToastMessage] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [configError, setConfigError] = useState(null);
   
   const userLevel = Math.floor(userXP / 1000) + 1;
   const levelProgress = ((userXP % 1000) / 1000) * 100;
@@ -1004,32 +1000,8 @@ const App = () => {
     setIsProfileOpen(true);
   };
 
-  // --- Initialize Supabase Dynamically ---
-  useEffect(() => {
-    const initSupabase = async () => {
-      // Configuration Check
-      if (supabaseUrl === "INSERT_YOUR_SUPABASE_URL_HERE" || !supabaseUrl.startsWith("http")) {
-         setConfigError("Configuration Required");
-         return;
-      }
-
-      try {
-        // Dynamically import Supabase to avoid build-time errors with URL imports
-        const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
-        const client = createClient(supabaseUrl, supabaseAnonKey);
-        setSupabase(client);
-      } catch (e) {
-        console.error("Failed to load Supabase:", e);
-        setConfigError("Failed to load Supabase library.");
-      }
-    };
-    initSupabase();
-  }, []);
-
   // --- Session & Auth ---
   useEffect(() => {
-    if (!supabase) return;
-
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
     });
@@ -1041,11 +1013,11 @@ const App = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase]);
+  }, []);
 
   // --- Profile Sync (Persistent XP) ---
   useEffect(() => {
-    if (session && supabase) {
+    if (session) {
       const fetchProfile = async () => {
         const { data, error } = await supabase
           .from('profiles')
@@ -1063,18 +1035,14 @@ const App = () => {
     } else {
       setUserXP(0);
     }
-  }, [session, supabase]);
+  }, [session]);
 
   // --- Data Fetching ---
   useEffect(() => {
-    if (supabase) {
-      fetchQuestions();
-    }
-  }, [supabase]);
+    fetchQuestions();
+  }, []);
 
   const fetchQuestions = async () => {
-    if (!supabase) return;
-
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -1120,8 +1088,6 @@ const App = () => {
 
   // --- Realtime Subscriptions (INSERT Only) ---
   useEffect(() => {
-    if (!supabase) return;
-
     const channel = supabase
       .channel('realtime_feed')
       // Listener for New Questions
@@ -1163,7 +1129,7 @@ const App = () => {
             if (q.id === newReply.question_id) {
               return {
                 ...q,
-                comments: (q.comments || 0) + 1, // FIXED: Increment counter
+                comments: (q.comments || 0) + 1, // Increment counter
                 replies: [formattedReply, ...(q.replies || [])]
               };
             }
@@ -1176,11 +1142,10 @@ const App = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [supabase]);
+  }, []);
 
   // --- Auth Actions ---
   const handleLoginGithub = async () => {
-    if (!supabase) return;
     try {
       await supabase.auth.signInWithOAuth({
         provider: 'github',
@@ -1195,7 +1160,6 @@ const App = () => {
   };
 
   const handleLoginGoogle = async () => {
-    if (!supabase) return;
     try {
       await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -1210,7 +1174,6 @@ const App = () => {
   };
 
   const handleLogout = async () => {
-    if (!supabase) return;
     try {
       await supabase.auth.signOut();
       setSession(null);
@@ -1230,7 +1193,7 @@ const App = () => {
     setTimeout(() => setToastMessage(null), 3000);
 
     // 3. Persist to Supabase Database
-    if (session && supabase) {
+    if (session) {
       try {
         const { error } = await supabase
           .from('profiles')
@@ -1247,7 +1210,6 @@ const App = () => {
   };
 
   const handleAddQuestion = async (formData) => {
-    if (!supabase) return;
     try {
       if (!session) {
         alert("You must be logged in to ask a question.");
@@ -1282,10 +1244,6 @@ const App = () => {
   };
 
   const handleSubmitAnswer = async (questionId, text) => {
-    if (!supabase) {
-        alert("System connecting, please wait...");
-        return;
-    }
     if (!session) {
       alert("Please login to submit an answer.");
       return;
@@ -1314,43 +1272,6 @@ const App = () => {
       alert('Failed to post reply.');
     }
   };
-
-  // --- Configuration Error Screen ---
-  if (configError) {
-    return (
-        <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 text-center">
-            <div className="bg-red-500/10 border border-red-500/20 p-8 rounded-2xl max-w-lg shadow-[0_0_40px_rgba(239,68,68,0.1)]">
-                <div className="mx-auto w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center mb-4">
-                    <AlertTriangle className="w-6 h-6 text-red-400" />
-                </div>
-                <h2 className="text-xl font-bold text-red-400 mb-4">Configuration Required</h2>
-                <p className="text-slate-300 mb-6 text-sm leading-relaxed">
-                    The app cannot connect to the neural network because the Supabase URL is missing. This is a security feature to prevent connection to a non-existent database.
-                </p>
-                <div className="bg-slate-900 p-4 rounded-lg text-left text-xs font-mono text-slate-400 mb-6 overflow-x-auto border border-white/5">
-                     <span className="text-slate-500">// Edit lines 11-12 in App.jsx</span><br/>
-                     <span className="text-purple-400">const</span> <span className="text-blue-400">supabaseUrl</span> = <span className="text-green-400">"YOUR_SUPABASE_URL"</span>;<br/>
-                     <span className="text-purple-400">const</span> <span className="text-blue-400">supabaseAnonKey</span> = <span className="text-green-400">"YOUR_SUPABASE_KEY"</span>;
-                </div>
-                <p className="text-slate-500 text-xs">
-                    Please edit the code on the right to add your Supabase project credentials.
-                </p>
-            </div>
-        </div>
-    );
-  }
-
-  if (!supabase) {
-    return (
-      <div className="min-h-screen bg-slate-950 text-slate-200 flex flex-col items-center justify-center">
-         <div className="relative">
-           <div className="absolute inset-0 bg-cyan-500/20 blur-xl rounded-full"></div>
-           <Loader2 className="w-16 h-16 text-cyan-500 animate-spin relative z-10" />
-         </div>
-         <p className="mt-8 font-mono text-cyan-400 animate-pulse tracking-widest text-sm">INITIALIZING NEURAL LINK...</p>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-indigo-500/30 selection:text-white">
