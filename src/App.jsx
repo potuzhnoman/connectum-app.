@@ -41,8 +41,8 @@ const getFlagAndCountry = (language) => {
 
 // --- Components ---
 
-// 1. Navigation Bar with Stats HUD
-const Navbar = ({ onOpenModal, onOpenLeaderboard, xp, level, xpProgress, session, onLoginGithub, onLoginGoogle, onLogout }) => {
+// 1. Navigation Bar
+const Navbar = ({ onOpenModal, onOpenLeaderboard, onOpenProfile, xp, level, xpProgress, session, onLoginGithub, onLoginGoogle, onLogout }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -53,17 +53,17 @@ const Navbar = ({ onOpenModal, onOpenLeaderboard, xp, level, xpProgress, session
   }, []);
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b ${
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b w-full ${
       isScrolled 
         ? 'bg-slate-950/80 backdrop-blur-xl border-cyan-500/20 py-3 shadow-[0_0_20px_rgba(6,182,212,0.1)]' 
         : 'bg-transparent border-transparent py-5'
     }`}>
-      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between">
         <div className="flex items-center gap-2 group cursor-pointer" onClick={() => window.scrollTo(0,0)}>
-          <div className="relative flex items-center justify-center w-10 h-10 bg-cyan-500/10 rounded-xl border border-cyan-500/30 group-hover:border-cyan-400 transition-colors">
+          <div className="relative flex items-center justify-center w-10 h-10 bg-cyan-500/10 rounded-xl border border-cyan-500/30 group-hover:border-cyan-400 transition-colors flex-shrink-0">
             <Cpu className="w-6 h-6 text-cyan-400 group-hover:animate-pulse" />
           </div>
-          <span className="text-xl font-bold tracking-tight text-white">
+          <span className="text-xl font-bold tracking-tight text-white hidden sm:block">
             Connectum<span className="text-cyan-400">.</span>
           </span>
         </div>
@@ -76,7 +76,6 @@ const Navbar = ({ onOpenModal, onOpenLeaderboard, xp, level, xpProgress, session
             </a>
           ))}
 
-          {/* Leaderboard Trigger */}
           <button 
             onClick={onOpenLeaderboard}
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 hover:bg-amber-500/20 transition-all"
@@ -86,10 +85,8 @@ const Navbar = ({ onOpenModal, onOpenLeaderboard, xp, level, xpProgress, session
             <span className="text-xs font-bold uppercase tracking-wide">Leaders</span>
           </button>
           
-          {/* User Section */}
           {session ? (
             <div className="flex items-center gap-4 pl-4 border-l border-slate-800">
-              {/* Stats */}
               <div className="flex flex-col items-end">
                 <div className="flex items-center gap-2 mb-1">
                    <span className="text-[10px] font-bold text-cyan-400 tracking-widest uppercase">Lvl {level} Node</span>
@@ -103,9 +100,11 @@ const Navbar = ({ onOpenModal, onOpenLeaderboard, xp, level, xpProgress, session
                 </div>
               </div>
               
-              {/* Profile */}
               <div className="flex items-center gap-3">
-                <div className="relative group cursor-pointer">
+                <div 
+                  className="relative group cursor-pointer" 
+                  onClick={() => onOpenProfile(session.user.id)}
+                >
                   <div className="w-10 h-10 rounded-full bg-slate-900 p-0.5 ring-2 ring-cyan-500/30 group-hover:ring-cyan-400 transition-all overflow-hidden">
                      <img 
                         src={session.user.user_metadata.avatar_url} 
@@ -153,9 +152,17 @@ const Navbar = ({ onOpenModal, onOpenLeaderboard, xp, level, xpProgress, session
         </div>
 
         {/* Mobile Toggle */}
-        <button className="md:hidden text-slate-300" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-          {mobileMenuOpen ? <X /> : <Menu />}
-        </button>
+        <div className="flex items-center gap-4 md:hidden">
+           <button 
+            onClick={onOpenLeaderboard}
+            className="flex items-center justify-center w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400"
+          >
+            <Trophy className="w-5 h-5" />
+          </button>
+          <button className="text-slate-300" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            {mobileMenuOpen ? <X /> : <Menu />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Menu */}
@@ -163,7 +170,10 @@ const Navbar = ({ onOpenModal, onOpenLeaderboard, xp, level, xpProgress, session
         <div className="absolute top-full left-0 w-full bg-slate-950/95 backdrop-blur-xl border-b border-slate-800 p-6 md:hidden flex flex-col gap-4 shadow-2xl animate-fade-in">
           {session ? (
             <>
-              <div className="flex items-center gap-4 pb-4 border-b border-slate-800">
+              <div 
+                className="flex items-center gap-4 pb-4 border-b border-slate-800 cursor-pointer"
+                onClick={() => { onOpenProfile(session.user.id); setMobileMenuOpen(false); }}
+              >
                  <div className="w-12 h-12 rounded-full bg-indigo-600 overflow-hidden">
                      <img src={session.user.user_metadata.avatar_url} alt="User" className="w-full h-full object-cover" />
                  </div>
@@ -174,9 +184,6 @@ const Navbar = ({ onOpenModal, onOpenLeaderboard, xp, level, xpProgress, session
               </div>
               <button onClick={() => { onOpenModal(); setMobileMenuOpen(false); }} className="w-full py-3 bg-cyan-600 text-white rounded-lg font-bold">
                 Ask Question
-              </button>
-              <button onClick={() => { onOpenLeaderboard(); setMobileMenuOpen(false); }} className="w-full py-3 bg-amber-600/20 text-amber-400 border border-amber-600/50 rounded-lg font-bold flex items-center justify-center gap-2">
-                <Trophy className="w-4 h-4" /> Leaderboard
               </button>
               <button onClick={() => { onLogout(); setMobileMenuOpen(false); }} className="w-full py-3 bg-slate-800 text-slate-300 rounded-lg font-bold">
                 Log Out
@@ -198,7 +205,7 @@ const Navbar = ({ onOpenModal, onOpenLeaderboard, xp, level, xpProgress, session
   );
 };
 
-// 2. Language Ticker (Data Stream)
+// 2. Language Ticker
 const LanguageTicker = () => {
   const connections = [
     { from: 'UA', to: 'JP', time: '0.2s' },
@@ -232,15 +239,15 @@ const XPToast = ({ message, isVisible }) => {
   if (!isVisible) return null;
 
   return (
-    <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] animate-bounce-in">
+    <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] animate-bounce-in w-max max-w-[90vw]">
       <div className="bg-slate-900/90 backdrop-blur-xl border border-amber-500/30 px-6 py-3 rounded-full shadow-[0_0_40px_rgba(245,158,11,0.3)] flex items-center gap-3">
-        <div className="bg-amber-500/20 p-1.5 rounded-full">
+        <div className="bg-amber-500/20 p-1.5 rounded-full flex-shrink-0">
           <Trophy className="w-5 h-5 text-amber-400" />
         </div>
         <div>
-          <h4 className="text-amber-400 font-bold text-lg leading-none">{message}</h4>
+          <h4 className="text-amber-400 font-bold text-sm sm:text-lg leading-none truncate">{message}</h4>
         </div>
-        <div className="ml-2 flex gap-0.5">
+        <div className="ml-2 flex gap-0.5 flex-shrink-0">
            <Sparkles className="w-4 h-4 text-yellow-200 animate-pulse" />
         </div>
       </div>
@@ -249,7 +256,7 @@ const XPToast = ({ message, isVisible }) => {
 };
 
 // 4. Question Card Component
-const QuestionCard = ({ data, onSubmitAnswer, session, onLoginGithub, onLoginGoogle }) => {
+const QuestionCard = ({ data, onSubmitAnswer, session, onLoginGithub, onLoginGoogle, onUserClick }) => {
   const [translated, setTranslated] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isSimulatingAI, setIsSimulatingAI] = useState(data.isNew || false);
@@ -281,34 +288,41 @@ const QuestionCard = ({ data, onSubmitAnswer, session, onLoginGithub, onLoginGoo
 
   return (
     <div 
-      className={`relative p-6 rounded-3xl bg-slate-900/40 border border-white/5 hover:border-cyan-500/30 transition-all duration-500 hover:bg-slate-900/60 group ${data.isNew ? 'animate-slide-in' : ''}`}
+      className={`relative p-4 sm:p-6 rounded-3xl bg-slate-900/40 border border-white/5 hover:border-cyan-500/30 transition-all duration-500 hover:bg-slate-900/60 group max-w-full overflow-hidden ${data.isNew ? 'animate-slide-in' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Card Glow */}
       <div className={`absolute -inset-0.5 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-3xl opacity-0 group-hover:opacity-10 transition-opacity duration-500 blur-lg`} />
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-5 relative z-10">
+      <div className="flex items-start sm:items-center justify-between mb-5 relative z-10 gap-2">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-cyan-500/20 overflow-hidden border border-white/10">
+          <div 
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-cyan-500/20 overflow-hidden border border-white/10 flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-cyan-400 transition-all"
+            onClick={() => data.authorId && onUserClick(data.authorId)}
+          >
              {data.avatarUrl ? (
                <img src={data.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
              ) : (
                <span>{data.avatar}</span>
              )}
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h4 className="text-base font-bold text-white group-hover:text-cyan-200 transition-colors">{data.name}</h4>
-              <span className="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-300 flex items-center gap-1 border border-slate-700">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h4 
+                className="text-sm sm:text-base font-bold text-white group-hover:text-cyan-200 transition-colors truncate cursor-pointer hover:underline"
+                onClick={() => data.authorId && onUserClick(data.authorId)}
+              >
+                {data.name}
+              </h4>
+              <span className="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-300 flex items-center gap-1 border border-slate-700 flex-shrink-0">
                 {data.flag} {data.country}
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-0.5">{data.timeAgo}</p>
           </div>
         </div>
-        <div className="flex items-center gap-1 text-amber-400 bg-amber-400/10 px-3 py-1 rounded-full border border-amber-400/20 shadow-[0_0_15px_rgba(245,158,11,0.1)]">
+        <div className="flex items-center gap-1 text-amber-400 bg-amber-400/10 px-2 sm:px-3 py-1 rounded-full border border-amber-400/20 shadow-[0_0_15px_rgba(245,158,11,0.1)] flex-shrink-0">
           <Zap className="w-3.5 h-3.5 fill-current" />
           <span className="text-xs font-bold">{data.xp} XP</span>
         </div>
@@ -323,18 +337,16 @@ const QuestionCard = ({ data, onSubmitAnswer, session, onLoginGithub, onLoginGoo
           </div>
         ) : (
           <div className="space-y-4 animate-fade-in">
-             {/* Original Text */}
             <div className={`transition-all duration-500 ${translated ? 'opacity-40 scale-95 origin-left' : 'opacity-100'}`}>
-              <p className="text-xl text-slate-200 font-medium leading-relaxed font-light">
+              <p className="text-lg sm:text-xl text-slate-200 font-medium leading-relaxed font-light break-words">
                 "{data.questionOriginal}"
               </p>
             </div>
 
-            {/* Translation Reveal */}
             <div className={`overflow-hidden transition-all duration-500 ease-in-out ${translated ? 'max-h-32 opacity-100' : 'max-h-0 opacity-0'}`}>
               <div className="flex gap-4 pl-4 border-l-2 border-cyan-500 bg-gradient-to-r from-cyan-900/10 to-transparent p-3 rounded-r-xl">
                 <Sparkles className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-1" />
-                <p className="text-lg text-cyan-100 font-medium leading-relaxed">
+                <p className="text-base sm:text-lg text-cyan-100 font-medium leading-relaxed break-words">
                   {data.questionTranslated}
                 </p>
               </div>
@@ -344,11 +356,11 @@ const QuestionCard = ({ data, onSubmitAnswer, session, onLoginGithub, onLoginGoo
       </div>
 
       {/* Actions */}
-      <div className="flex items-center justify-between pt-5 border-t border-white/5 relative z-10">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between pt-5 border-t border-white/5 relative z-10 gap-3">
         <button 
           onClick={() => !isSimulatingAI && setTranslated(!translated)}
           disabled={isSimulatingAI}
-          className={`flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl transition-all ${
+          className={`flex items-center justify-center gap-2 text-xs font-bold px-4 py-2 rounded-xl transition-all ${
             translated 
               ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' 
               : 'bg-slate-800/50 text-slate-400 hover:text-white hover:bg-slate-700'
@@ -358,7 +370,7 @@ const QuestionCard = ({ data, onSubmitAnswer, session, onLoginGithub, onLoginGoo
           {translated ? 'Show Original' : 'AI Translate'}
         </button>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between sm:justify-end gap-3">
            <button 
              onClick={handleExpand}
              className="text-slate-500 hover:text-white transition-colors flex items-center gap-1.5 text-xs font-medium hover:bg-slate-800 p-2 rounded-lg"
@@ -368,7 +380,7 @@ const QuestionCard = ({ data, onSubmitAnswer, session, onLoginGithub, onLoginGoo
            </button>
            <button 
              onClick={() => !isSimulatingAI && handleExpand()}
-             className={`px-5 py-2 text-xs font-bold rounded-xl transition-all shadow-sm disabled:opacity-50 ${isExpanded ? 'bg-indigo-600 text-white shadow-indigo-500/20' : 'bg-slate-100 text-slate-900 hover:bg-white'}`} 
+             className={`px-5 py-2 text-xs font-bold rounded-xl transition-all shadow-sm disabled:opacity-50 flex-1 sm:flex-none ${isExpanded ? 'bg-indigo-600 text-white shadow-indigo-500/20' : 'bg-slate-100 text-slate-900 hover:bg-white'}`} 
              disabled={isSimulatingAI}
            >
              {isExpanded ? 'Close' : 'Answer'}
@@ -379,7 +391,6 @@ const QuestionCard = ({ data, onSubmitAnswer, session, onLoginGithub, onLoginGoo
       {/* Expandable Reply Section */}
       {isExpanded && (
         <div className="mt-6 pt-6 border-t border-white/5 animate-fade-in relative z-10">
-          {/* Existing Replies */}
           {data.replies && data.replies.length > 0 && (
             <div className="mb-6 space-y-4">
               <h5 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Top Answers</h5>
@@ -388,22 +399,21 @@ const QuestionCard = ({ data, onSubmitAnswer, session, onLoginGithub, onLoginGoo
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-slate-800 overflow-hidden border border-white/10">
                     <img src={reply.avatar} alt={reply.author} className="w-full h-full object-cover" />
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-bold text-cyan-300">{reply.author}</span>
-                      <span className="text-[10px] text-slate-500">{reply.time}</span>
+                      <span className="text-xs font-bold text-cyan-300 truncate">{reply.author}</span>
+                      <span className="text-[10px] text-slate-500 flex-shrink-0 ml-2">{reply.time}</span>
                     </div>
-                    <p className="text-sm text-slate-300 leading-relaxed">{reply.text}</p>
+                    <p className="text-sm text-slate-300 leading-relaxed break-words">{reply.text}</p>
                   </div>
                 </div>
               ))}
             </div>
           )}
 
-          {/* New Answer Input */}
           <div className="relative group/input">
             {!session && (
-              <div className="absolute inset-0 z-20 bg-slate-950/90 backdrop-blur-sm flex flex-col items-center justify-center rounded-xl border border-slate-800">
+              <div className="absolute inset-0 z-20 bg-slate-950/90 backdrop-blur-sm flex flex-col items-center justify-center rounded-xl border border-slate-800 p-4 text-center">
                  <p className="text-slate-300 text-sm mb-4 font-bold">Join the HiveMind to answer</p>
                  <div className="flex gap-3">
                    <button onClick={onLoginGoogle} className="flex items-center gap-2 px-4 py-2 bg-white text-slate-900 text-xs font-bold rounded-lg transition-all hover:bg-slate-100">
@@ -467,8 +477,7 @@ const AskQuestionModal = ({ isOpen, onClose, onSubmit, session, onLoginGithub, o
       />
       
       {/* Modal Content */}
-      <div className="relative w-full max-w-lg bg-slate-900 border border-white/10 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.5)] p-8 animate-scale-in overflow-hidden">
-        {/* Glow effect */}
+      <div className="relative w-full max-w-lg bg-slate-900 border border-white/10 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.5)] p-8 animate-scale-in overflow-hidden max-h-[90vh] overflow-y-auto custom-scrollbar">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500 via-purple-500 to-cyan-500" />
         
         <button 
@@ -592,7 +601,148 @@ const AskQuestionModal = ({ isOpen, onClose, onSubmit, session, onLoginGithub, o
   );
 };
 
-// 6. Leaderboard Modal Component
+// 6. NEW: User Profile Modal Component
+const UserProfileModal = ({ isOpen, onClose, userId, supabase }) => {
+  const [profile, setProfile] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (isOpen && userId && supabase) {
+      fetchUserData();
+    }
+  }, [isOpen, userId, supabase]);
+
+  const fetchUserData = async () => {
+    setLoading(true);
+    try {
+      // 1. Fetch Profile
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (profileError) throw profileError;
+      setProfile(profileData);
+
+      // 2. Fetch History
+      const { data: historyData, error: historyError } = await supabase
+        .from('questions')
+        .select('*')
+        .eq('author_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (historyError) {
+         console.warn("Could not fetch history:", historyError);
+         setHistory([]);
+      } else {
+         setHistory(historyData || []);
+      }
+
+    } catch (err) {
+      console.error("Error fetching user profile:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
+      <div 
+        className="absolute inset-0 bg-slate-950/90 backdrop-blur-xl transition-opacity" 
+        onClick={onClose}
+      />
+      
+      <div className="relative w-full max-w-md bg-slate-900/90 border-2 border-cyan-500/50 rounded-xl shadow-[0_0_100px_rgba(6,182,212,0.2)] p-0 animate-scale-in overflow-hidden flex flex-col max-h-[85vh]">
+        
+        {/* Decoration Lines */}
+        <div className="absolute top-4 left-4 w-2 h-2 bg-cyan-500 rounded-full animate-pulse" />
+        <div className="absolute top-4 right-4 w-2 h-2 bg-cyan-500 rounded-full animate-pulse" />
+        <div className="absolute bottom-4 left-4 w-2 h-2 bg-cyan-500 rounded-full animate-pulse" />
+        <div className="absolute bottom-4 right-4 w-2 h-2 bg-cyan-500 rounded-full animate-pulse" />
+
+        {/* Header */}
+        <div className="p-6 pb-2 relative z-10 flex justify-between items-start">
+           <div className="flex items-center gap-2">
+              <div className="px-2 py-0.5 bg-cyan-500/20 border border-cyan-500 text-cyan-400 text-[10px] font-mono font-bold tracking-widest uppercase">
+                 Identity Verified
+              </div>
+           </div>
+           <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors">
+             <X className="w-5 h-5" />
+           </button>
+        </div>
+
+        <div className="px-6 pb-6 border-b border-cyan-500/20">
+           {loading ? (
+              <div className="flex flex-col items-center py-10">
+                 <Loader2 className="w-10 h-10 text-cyan-500 animate-spin" />
+              </div>
+           ) : profile ? (
+             <div className="flex flex-col items-center text-center">
+                <div className="w-24 h-24 rounded-full border-4 border-slate-800 ring-2 ring-cyan-500 mb-4 overflow-hidden bg-slate-800 shadow-[0_0_30px_rgba(6,182,212,0.3)]">
+                   <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full object-cover" />
+                </div>
+                <h2 className="text-2xl font-bold text-white mb-1">{profile.full_name}</h2>
+                <p className="text-xs font-mono text-cyan-500 mb-4">ID: {profile.id.slice(0, 8)}...</p>
+                
+                <div className="grid grid-cols-2 gap-4 w-full mt-2">
+                   <div className="bg-slate-800/50 p-3 rounded-lg border border-white/5">
+                      <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Level</div>
+                      <div className="text-xl font-bold text-white flex items-center justify-center gap-1">
+                         <Crown className="w-4 h-4 text-amber-400" />
+                         {Math.floor(profile.xp / 1000) + 1}
+                      </div>
+                   </div>
+                   <div className="bg-slate-800/50 p-3 rounded-lg border border-white/5">
+                      <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">XP</div>
+                      <div className="text-xl font-bold text-cyan-400 flex items-center justify-center gap-1">
+                         <Zap className="w-4 h-4" />
+                         {profile.xp}
+                      </div>
+                   </div>
+                </div>
+             </div>
+           ) : (
+             <div className="text-center py-10 text-slate-500">
+                User profile not found.
+             </div>
+           )}
+        </div>
+
+        {/* History Section */}
+        <div className="flex-1 overflow-y-auto p-6 bg-black/20 custom-scrollbar">
+           <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+              <Activity className="w-3 h-3" /> Recent Transmissions
+           </h3>
+           
+           {!loading && history.length === 0 && (
+              <p className="text-sm text-slate-600 italic">No recent questions detected.</p>
+           )}
+
+           <div className="space-y-3">
+              {history.map((item) => (
+                 <div key={item.id} className="p-3 rounded-lg bg-slate-800/40 border border-white/5 hover:border-cyan-500/30 transition-colors">
+                    <p className="text-sm text-slate-300 font-medium mb-2 line-clamp-2">"{item.text}"</p>
+                    <div className="flex items-center justify-between text-[10px] text-slate-500">
+                       <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {formatTimeAgo(item.created_at)}</span>
+                       <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800 border border-slate-700">{item.language}</span>
+                    </div>
+                 </div>
+              ))}
+           </div>
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
+// 7. Leaderboard Modal Component
 const LeaderboardModal = ({ isOpen, onClose, supabase }) => {
   const [leaders, setLeaders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -608,7 +758,7 @@ const LeaderboardModal = ({ isOpen, onClose, supabase }) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*') // Assuming standard profile fields: id, full_name, avatar_url, xp
+        .select('*')
         .order('xp', { ascending: false })
         .limit(10);
       
@@ -632,7 +782,6 @@ const LeaderboardModal = ({ isOpen, onClose, supabase }) => {
       
       <div className="relative w-full max-w-md bg-slate-900 border border-amber-500/20 rounded-3xl shadow-[0_0_80px_rgba(245,158,11,0.15)] p-0 animate-scale-in overflow-hidden flex flex-col max-h-[80vh]">
         
-        {/* Header */}
         <div className="p-6 pb-4 border-b border-white/5 bg-gradient-to-b from-amber-500/10 to-transparent relative">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent opacity-50" />
           <button 
@@ -653,7 +802,6 @@ const LeaderboardModal = ({ isOpen, onClose, supabase }) => {
           </div>
         </div>
 
-        {/* List */}
         <div className="overflow-y-auto p-4 space-y-2 custom-scrollbar">
           {loading ? (
              <div className="flex flex-col items-center justify-center py-10">
@@ -710,43 +858,35 @@ const LeaderboardModal = ({ isOpen, onClose, supabase }) => {
 };
 
 
-// 7. Visual Hook (Premium Complex SoftSphere)
+// 8. Visual Hook (Premium Complex SoftSphere)
 const SoftSphere = () => {
   return (
-    <div className="relative w-full h-[500px] md:h-[600px] flex items-center justify-center perspective-1000">
-      {/* Abstract Glowing Gradient Behind */}
+    <div className="relative w-full h-[500px] md:h-[600px] flex items-center justify-center perspective-1000 overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/20 via-purple-500/20 to-transparent blur-[100px] rounded-full animate-pulse" />
       
-      {/* The Sphere Representation */}
       <div className="relative w-64 h-64 md:w-96 md:h-96 animate-slow-spin transform-style-3d">
-        {/* Rings */}
         <div className="absolute inset-0 border border-cyan-400/30 rounded-full shadow-[0_0_30px_rgba(6,182,212,0.1)]" />
         <div className="absolute inset-0 border border-purple-500/30 rounded-full rotate-45 shadow-[0_0_30px_rgba(168,85,247,0.1)]" />
         <div className="absolute inset-0 border border-white/10 rounded-full rotate-90" />
         
-        {/* Orbiting Satellites (Language Tags) */}
-        {/* Satellite 1: JP */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-6 w-12 h-12 animate-orbit-1">
            <div className="w-full h-full bg-slate-900/90 backdrop-blur-md border border-cyan-400 p-2 rounded-xl shadow-[0_0_25px_rgba(6,182,212,0.4)] flex items-center justify-center animate-counter-spin">
               <span className="text-cyan-300 font-bold text-xs">JP</span>
            </div>
         </div>
         
-        {/* Satellite 2: UA */}
         <div className="absolute bottom-10 right-0 w-12 h-12 animate-orbit-2">
            <div className="w-full h-full bg-slate-900/90 backdrop-blur-md border border-purple-500 p-2 rounded-xl shadow-[0_0_25px_rgba(168,85,247,0.4)] flex items-center justify-center animate-counter-spin">
               <span className="text-purple-300 font-bold text-xs">UA</span>
            </div>
         </div>
 
-        {/* Satellite 3: EN */}
         <div className="absolute top-1/2 left-0 -translate-x-6 w-auto h-auto animate-orbit-3">
            <div className="bg-emerald-900/90 backdrop-blur-md border border-emerald-500 px-3 py-1 rounded-full shadow-[0_0_25px_rgba(16,185,129,0.4)] animate-counter-spin">
               <span className="text-emerald-300 font-mono text-[10px] font-bold">+50 XP</span>
            </div>
         </div>
 
-        {/* Central Core */}
         <div className="absolute inset-0 m-auto w-32 h-32 bg-slate-900/60 backdrop-blur-md rounded-full border border-white/20 flex items-center justify-center shadow-[inset_0_0_30px_rgba(255,255,255,0.1)]">
            <Globe className="w-16 h-16 text-white/90 drop-shadow-[0_0_15px_rgba(255,255,255,0.6)] animate-pulse" />
         </div>
@@ -755,12 +895,11 @@ const SoftSphere = () => {
   );
 };
 
-// 8. Hero Section
+// 9. Hero Section
 const Hero = ({ onOpenModal, onLogin }) => {
   return (
     <section className="relative pt-32 pb-20 px-6 flex flex-col items-center justify-center overflow-hidden">
       
-      {/* Background Decor */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none z-0">
          <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-[120px] mix-blend-screen animate-pulse" style={{animationDuration: '4s'}}></div>
          <div className="absolute bottom-0 right-[-10%] w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[120px] mix-blend-screen animate-pulse" style={{animationDuration: '7s'}}></div>
@@ -772,7 +911,7 @@ const Hero = ({ onOpenModal, onLogin }) => {
       <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10">
         
         {/* Text Content */}
-        <div className="text-left space-y-8">
+        <div className="text-left space-y-8 max-w-full">
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md shadow-[0_0_15px_rgba(6,182,212,0.15)] animate-fade-in">
             <span className="relative flex h-2 w-2">
@@ -784,13 +923,13 @@ const Hero = ({ onOpenModal, onLogin }) => {
 
           {/* Headlines */}
           <div className="space-y-4 animate-slide-in">
-            <h1 className="text-6xl md:text-8xl font-bold tracking-tighter text-white leading-[0.9]">
+            <h1 className="text-5xl sm:text-6xl md:text-8xl font-bold tracking-tighter text-white leading-[0.9] break-words">
               Global Mind.<br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-blue-400 to-purple-500 drop-shadow-[0_0_30px_rgba(6,182,212,0.3)]">
                 Zero Barriers.
               </span>
             </h1>
-            <p className="text-xl md:text-2xl text-slate-300 max-w-xl leading-relaxed font-light">
+            <p className="text-lg sm:text-xl md:text-2xl text-slate-300 max-w-xl leading-relaxed font-light">
               Ask about <span className="text-white font-semibold border-b border-cyan-500/50">Life</span> or <span className="text-white font-semibold border-b border-purple-500/50">Tech</span>. 
               Get answers from everywhere.
             </p>
@@ -803,7 +942,7 @@ const Hero = ({ onOpenModal, onLogin }) => {
               className="group relative px-8 py-5 bg-white text-slate-950 rounded-xl font-bold text-xl overflow-hidden transition-all hover:scale-105 shadow-[0_0_40px_-5px_rgba(6,182,212,0.4)] hover:shadow-[0_0_60px_-5px_rgba(6,182,212,0.6)]"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-cyan-300 via-white to-cyan-300 opacity-0 group-hover:opacity-50 transition-opacity duration-500 blur-lg" />
-              <span className="relative flex items-center gap-2">
+              <span className="relative flex items-center gap-2 justify-center">
                 Join the HiveMind <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
               </span>
             </button>
@@ -814,18 +953,18 @@ const Hero = ({ onOpenModal, onLogin }) => {
           </div>
 
           {/* Social Proof */}
-          <div className="pt-10 flex items-center gap-10 border-t border-white/10 animate-fade-in" style={{animationDelay: '0.4s'}}>
+          <div className="pt-10 flex flex-wrap items-center gap-6 sm:gap-10 border-t border-white/10 animate-fade-in" style={{animationDelay: '0.4s'}}>
             <div>
-              <p className="text-3xl font-mono font-bold text-white drop-shadow-md">12k+</p>
-              <p className="text-xs text-cyan-200/70 uppercase tracking-widest font-semibold">Active Nodes</p>
+              <p className="text-2xl sm:text-3xl font-mono font-bold text-white drop-shadow-md">12k+</p>
+              <p className="text-[10px] sm:text-xs text-cyan-200/70 uppercase tracking-widest font-semibold">Active Nodes</p>
             </div>
             <div>
-              <p className="text-3xl font-mono font-bold text-white drop-shadow-md">40+</p>
-              <p className="text-xs text-cyan-200/70 uppercase tracking-widest font-semibold">Languages</p>
+              <p className="text-2xl sm:text-3xl font-mono font-bold text-white drop-shadow-md">40+</p>
+              <p className="text-[10px] sm:text-xs text-cyan-200/70 uppercase tracking-widest font-semibold">Languages</p>
             </div>
             <div>
-              <p className="text-3xl font-mono font-bold text-white drop-shadow-md">∞XP</p>
-              <p className="text-xs text-cyan-200/70 uppercase tracking-widest font-semibold">Knowledge Mined</p>
+              <p className="text-2xl sm:text-3xl font-mono font-bold text-white drop-shadow-md">∞XP</p>
+              <p className="text-[10px] sm:text-xs text-cyan-200/70 uppercase tracking-widest font-semibold">Knowledge Mined</p>
             </div>
           </div>
         </div>
@@ -847,15 +986,26 @@ const App = () => {
   const [session, setSession] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
+  
+  // New Profile State
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [viewProfileId, setViewProfileId] = useState(null);
+
   const [userXP, setUserXP] = useState(0); 
   const [toastMessage, setToastMessage] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [configError, setConfigError] = useState(null);
   
-  // Derived RPG Stats
   const userLevel = Math.floor(userXP / 1000) + 1;
   const levelProgress = ((userXP % 1000) / 1000) * 100;
+
+  // --- Handlers ---
+  const handleOpenProfile = (userId) => {
+    if (!userId) return;
+    setViewProfileId(userId);
+    setIsProfileOpen(true);
+  };
 
   // --- Initialize Supabase Dynamically ---
   useEffect(() => {
@@ -946,6 +1096,7 @@ const App = () => {
           country: country,
           flag: flag,
           avatarUrl: q.author_avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${q.author_name}`,
+          authorId: q.author_id, // Ensure this exists for profile clicking
           timeAgo: formatTimeAgo(q.created_at),
           questionOriginal: q.text,
           questionTranslated: q.text + " (AI Translated)", 
@@ -969,6 +1120,66 @@ const App = () => {
       setLoading(false);
     }
   };
+
+  // --- Realtime Subscriptions (INSERT Only) ---
+  useEffect(() => {
+    if (!supabase) return;
+
+    const channel = supabase
+      .channel('realtime_feed')
+      // Listener for New Questions
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'questions' }, (payload) => {
+        const newQ = payload.new;
+        const { flag, country } = getFlagAndCountry(newQ.language);
+        
+        const formattedQuestion = {
+          id: newQ.id,
+          name: newQ.author_name || 'Anonymous',
+          country: country,
+          flag: flag,
+          avatarUrl: newQ.author_avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${newQ.author_name}`,
+          authorId: newQ.author_id,
+          timeAgo: 'Just now', // Realtime items are always fresh
+          questionOriginal: newQ.text,
+          questionTranslated: newQ.text + " (AI Translated)", 
+          xp: newQ.xp_reward || 0,
+          comments: 0,
+          replies: [],
+          isNew: true // Triggers animation
+        };
+
+        setQuestions((prev) => [formattedQuestion, ...prev]);
+      })
+      // Listener for New Replies
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'replies' }, (payload) => {
+        const newReply = payload.new;
+        const formattedReply = {
+          id: newReply.id,
+          author: newReply.author_name,
+          text: newReply.text,
+          time: 'Just now',
+          avatar: newReply.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${newReply.author_name}`
+        };
+
+        setQuestions((prevQuestions) => 
+          prevQuestions.map((q) => {
+            if (q.id === newReply.question_id) {
+              return {
+                ...q,
+                comments: (q.comments || 0) + 1, // Increment counter
+                replies: [formattedReply, ...(q.replies || [])]
+              };
+            }
+            return q;
+          })
+        );
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [supabase]);
 
   // --- Auth Actions ---
   const handleLoginGithub = async () => {
@@ -1051,6 +1262,7 @@ const App = () => {
         language: formData.language,
         category: formData.category, 
         author_name: session.user.user_metadata.full_name || session.user.email,
+        author_id: session.user.id, // Save ID so we can look up profile later
         xp_reward: 50
       };
 
@@ -1062,7 +1274,6 @@ const App = () => {
       if (error) throw error;
 
       if (data && data.length > 0) {
-        fetchQuestions(); 
         handleAddXP(50, "Posted Question");
         setIsModalOpen(false);
       }
@@ -1099,7 +1310,6 @@ const App = () => {
       if (error) throw error;
 
       if (data && data.length > 0) {
-        fetchQuestions();
         handleAddXP(100, "Solution Provided");
       }
     } catch (error) {
@@ -1121,7 +1331,7 @@ const App = () => {
                     The app cannot connect to the neural network because the Supabase URL is missing. This is a security feature to prevent connection to a non-existent database.
                 </p>
                 <div className="bg-slate-900 p-4 rounded-lg text-left text-xs font-mono text-slate-400 mb-6 overflow-x-auto border border-white/5">
-                     <span className="text-slate-500">// Edit lines 35-36 in App.jsx</span><br/>
+                     <span className="text-slate-500">// Edit lines 12-13 in App.jsx</span><br/>
                      <span className="text-purple-400">const</span> <span className="text-blue-400">supabaseUrl</span> = <span className="text-green-400">"YOUR_SUPABASE_URL"</span>;<br/>
                      <span className="text-purple-400">const</span> <span className="text-blue-400">supabaseAnonKey</span> = <span className="text-green-400">"YOUR_SUPABASE_KEY"</span>;
                 </div>
@@ -1227,6 +1437,7 @@ const App = () => {
       <Navbar 
         onOpenModal={() => setIsModalOpen(true)} 
         onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
+        onOpenProfile={handleOpenProfile}
         xp={userXP} 
         level={userLevel} 
         xpProgress={levelProgress} 
@@ -1236,16 +1447,16 @@ const App = () => {
         onLogout={handleLogout}
       />
       
-      <main>
+      <main className="w-full">
         <Hero onOpenModal={() => setIsModalOpen(true)} onLogin={handleLoginGithub} />
         <LanguageTicker />
         
         {/* Question Feed */}
-        <section className="py-24 px-6 relative z-10">
+        <section className="py-24 px-6 relative z-10 w-full overflow-hidden">
           {/* Section Background Decor */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-5xl h-full bg-cyan-900/10 blur-[100px] -z-10 rounded-full mix-blend-screen" />
 
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-3xl mx-auto w-full">
             <div className="text-center mb-16 animate-fade-in">
               <h2 className="text-3xl font-bold text-white mb-3">Live Questions</h2>
               <p className="text-slate-400">Real-time knowledge exchange happening right now.</p>
@@ -1257,7 +1468,7 @@ const App = () => {
                 <p className="text-slate-500 font-mono text-sm">SYNCING WITH HIVE MIND...</p>
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-6 w-full">
                 {questions.length === 0 ? (
                   <div className="text-center py-10 text-slate-500 bg-slate-900/30 rounded-3xl border border-white/5 p-8 backdrop-blur-sm">
                      <p className="mb-2">No questions detected in the stream.</p>
@@ -1271,6 +1482,7 @@ const App = () => {
                       session={session}
                       onLoginGithub={handleLoginGithub}
                       onLoginGoogle={handleLoginGoogle}
+                      onUserClick={handleOpenProfile}
                     />
                   ))
                 )}
@@ -1331,6 +1543,13 @@ const App = () => {
       <LeaderboardModal 
         isOpen={isLeaderboardOpen}
         onClose={() => setIsLeaderboardOpen(false)}
+        supabase={supabase}
+      />
+
+      <UserProfileModal 
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+        userId={viewProfileId}
         supabase={supabase}
       />
     </div>
