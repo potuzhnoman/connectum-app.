@@ -1,92 +1,100 @@
-import React from 'react';
-import { X, User, MapPin, Calendar, Award, ShieldCheck, Github, Mail } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Loader2, Activity, Calendar, MapPin, Mail, Github, Crown, Zap } from 'lucide-react';
 
-const UserProfileModal = ({ isOpen, onClose, user }) => {
+const UserProfileModal = ({ isOpen, onClose, userId, supabase }) => {
+  const [profile, setProfile] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (isOpen && userId && supabase) {
+      const fetchUserData = async () => {
+        setLoading(true);
+        try {
+          // 1. Скачиваем профиль
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single();
+          setProfile(profileData);
+
+          // 2. Скачиваем историю вопросов
+          const { data: historyData } = await supabase
+            .from('questions')
+            .select('*')
+            .eq('author_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(5);
+          setHistory(historyData || []);
+        } catch (err) {
+          console.error(err);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchUserData();
+    }
+  }, [isOpen, userId, supabase]);
+
   if (!isOpen) return null;
-
-  // Fallback data if user is not fully populated
-  const userData = user || {
-    name: 'Anonymous Node',
-    avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=Anonymous`,
-    bio: 'This user has not added a bio yet.',
-    location: 'Unknown Sector',
-    joined: 'Recently',
-    level: 1,
-    xp: 0,
-    role: 'Explorer'
-  };
 
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
-      <div 
-        className="absolute inset-0 bg-slate-950/90 backdrop-blur-md transition-opacity" 
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-xl transition-opacity" onClick={onClose} />
       
-      <div className="relative w-full max-w-md bg-slate-900 border border-white/10 rounded-3xl shadow-[0_0_60px_rgba(79,70,229,0.15)] overflow-hidden animate-scale-in">
-        {/* Banner */}
-        <div className="h-32 bg-gradient-to-r from-cyan-600 to-purple-600 relative">
-           <button 
-            onClick={onClose}
-            className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-full"
-          >
-            <X className="w-5 h-5" />
-          </button>
+      <div className="relative w-full max-w-md bg-slate-900/90 border border-cyan-500/30 rounded-2xl shadow-[0_0_50px_rgba(6,182,212,0.15)] overflow-hidden flex flex-col max-h-[85vh]">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-70" />
+        
+        {/* Header */}
+        <div className="p-6 pb-0 flex justify-between items-start relative z-10">
+           <div className="flex items-center gap-2 px-2 py-1 rounded bg-cyan-500/10 border border-cyan-500/30">
+              <div className="w-2 h-2 bg-cyan-500 rounded-full animate-pulse" />
+              <span className="text-[10px] font-mono font-bold text-cyan-400 uppercase tracking-widest">Netrunner ID</span>
+           </div>
+           <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors"><X className="w-5 h-5" /></button>
         </div>
 
-        {/* Profile Info */}
-        <div className="px-6 pb-8">
-          <div className="relative -mt-12 mb-4 flex justify-between items-end">
-            <div className="w-24 h-24 rounded-full p-1 bg-slate-900">
-               <img 
-                 src={userData.avatarUrl} 
-                 alt="Profile" 
-                 className="w-full h-full rounded-full object-cover bg-slate-800"
-               />
-            </div>
-            <div className="mb-2 flex gap-2">
-               <button className="p-2 bg-slate-800 border border-slate-700 text-slate-300 rounded-lg hover:text-white hover:border-slate-600 transition-all">
-                 <Mail className="w-4 h-4" />
-               </button>
-               <button className="p-2 bg-slate-800 border border-slate-700 text-slate-300 rounded-lg hover:text-white hover:border-slate-600 transition-all">
-                 <Github className="w-4 h-4" />
-               </button>
-            </div>
-          </div>
+        <div className="p-6 border-b border-white/5 relative z-10">
+           {loading ? (
+             <div className="flex flex-col items-center py-10"><Loader2 className="w-10 h-10 text-cyan-500 animate-spin" /></div>
+           ) : profile ? (
+             <div className="flex flex-col items-center text-center">
+                <div className="w-24 h-24 rounded-2xl border-2 border-cyan-500/50 p-1 bg-slate-950 rotate-3 mb-4">
+                    <img src={profile.avatar_url} className="w-full h-full object-cover rounded-xl -rotate-3" />
+                </div>
+                <h2 className="text-2xl font-bold text-white tracking-tight">{profile.full_name}</h2>
+                <p className="text-xs font-mono text-slate-500 mt-1 mb-6 bg-slate-800/50 px-3 py-1 rounded-full">ID: {profile.id.slice(0, 8)}...</p>
+                
+                <div className="grid grid-cols-2 gap-3 w-full">
+                   <div className="bg-slate-800/40 border border-white/5 p-3 rounded-xl text-center">
+                      <span className="text-[10px] text-slate-400 uppercase font-bold">Level</span>
+                      <div className="text-xl font-bold text-amber-400">{Math.floor(profile.xp / 1000) + 1}</div>
+                   </div>
+                   <div className="bg-slate-800/40 border border-white/5 p-3 rounded-xl text-center">
+                      <span className="text-[10px] text-slate-400 uppercase font-bold">XP</span>
+                      <div className="text-xl font-bold text-cyan-400">{profile.xp}</div>
+                   </div>
+                </div>
+             </div>
+           ) : <div className="text-center py-10 text-slate-500">User not found.</div>}
+        </div>
 
-          <div>
-            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-              {userData.name}
-              <ShieldCheck className="w-5 h-5 text-cyan-400" />
-            </h2>
-            <p className="text-cyan-400 text-sm font-medium mb-4">Level {userData.level} • {userData.role}</p>
-            
-            <p className="text-slate-400 text-sm leading-relaxed mb-6">
-              {userData.bio}
-            </p>
-
-            <div className="flex flex-col gap-3 text-sm text-slate-500">
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4" />
-                {userData.location}
-              </div>
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                Joined {userData.joined}
-              </div>
-            </div>
-
-            <div className="mt-8 pt-6 border-t border-white/5 grid grid-cols-2 gap-4">
-               <div className="bg-slate-800/50 rounded-xl p-3 border border-white/5 text-center">
-                  <div className="text-2xl font-bold text-white">{userData.xp}</div>
-                  <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Total XP</div>
-               </div>
-               <div className="bg-slate-800/50 rounded-xl p-3 border border-white/5 text-center">
-                  <div className="text-2xl font-bold text-white">12</div>
-                  <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Answers</div>
-               </div>
-            </div>
-          </div>
+        {/* History List */}
+        <div className="flex-1 overflow-y-auto p-6 bg-black/20 custom-scrollbar relative z-10">
+           <h3 className="text-xs font-bold text-slate-500 uppercase mb-4 flex gap-2"><Activity className="w-3 h-3" /> Recent Activity</h3>
+           <div className="space-y-3">
+              {history.map((item) => (
+                 <div key={item.id} className="p-3 rounded-xl bg-white/5 border border-white/5">
+                    <p className="text-sm text-slate-200 mb-2 line-clamp-2">"{item.text}"</p>
+                    <div className="flex justify-between text-[10px] text-slate-500">
+                        <span>{item.language}</span>
+                        <span>{new Date(item.created_at).toLocaleDateString()}</span>
+                    </div>
+                 </div>
+              ))}
+              {!loading && history.length === 0 && <p className="text-slate-600 text-sm text-center">No transmissions yet.</p>}
+           </div>
         </div>
       </div>
     </div>

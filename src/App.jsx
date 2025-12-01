@@ -61,7 +61,9 @@ const App = () => {
   // Data State
   const [userXP, setUserXP] = useState(0); 
   const [questions, setQuestions] = useState([]);
-  const [selectedUserProfile, setSelectedUserProfile] = useState(null);
+  
+  // FIXED: Changed from selectedUserProfile object to ID string
+  const [viewProfileId, setViewProfileId] = useState(null);
 
   // Derived Stats
   const userLevel = Math.floor(userXP / 1000) + 1;
@@ -101,14 +103,36 @@ const App = () => {
     }
   }, [session, supabase]);
 
-  // --- 4. Data Fetching ---
+  // --- 4. Data Fetching & Realtime Subscription ---
   useEffect(() => {
-    if (supabase) fetchQuestions();
+    if (!supabase) return;
+
+    // Initial Fetch
+    fetchQuestions();
+
+    // FIXED: Realtime Subscription to handle UI updates smoothly
+    const channel = supabase
+      .channel('public:questions')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'questions' },
+        () => fetchQuestions(false) // Pass false to skip loading spinner
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'replies' },
+        () => fetchQuestions(false)
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [supabase]);
 
-  const fetchQuestions = async () => {
+  const fetchQuestions = async (showLoading = true) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       const { data, error } = await supabase
         .from('questions')
         .select('*, replies(*)')
@@ -121,7 +145,7 @@ const App = () => {
         const { flag, country } = getFlagAndCountry(q.language);
         return {
           id: q.id,
-          authorId: q.author_id, // Ensure this exists in DB or is mapped correctly
+          authorId: q.author_id,
           name: q.author_name || 'Anonymous',
           country: country,
           flag: flag,
@@ -145,7 +169,7 @@ const App = () => {
     } catch (error) {
       console.error('Error fetching questions:', error);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
@@ -189,14 +213,14 @@ const App = () => {
       category: formData.category, 
       author_name: session.user.user_metadata.full_name || session.user.email,
       author_id: session.user.id,
-      author_avatar: session.user.user_metadata.avatar_url,
+      // FIXED: Removed author_avatar to prevent DB error
       xp_reward: 50
     };
 
     const { data, error } = await supabase.from('questions').insert([newQuestionPayload]).select();
 
     if (!error && data) {
-      fetchQuestions(); 
+      // Fetch handled by Realtime subscription
       handleAddXP(50, "Posted Question");
       setIsModalOpen(false);
     }
@@ -215,16 +239,22 @@ const App = () => {
     const { data, error } = await supabase.from('replies').insert([replyPayload]).select();
 
     if (!error && data) {
-      fetchQuestions();
+      // FIXED: Removed fetchQuestions() to prevent jerky UI. Realtime handles update.
       handleAddXP(100, "Solution Provided");
     }
   };
 
   const handleUserClick = (userId) => {
-    // In a real app, fetch user profile by ID here.
-    // For now, we open the modal which handles fallback data.
-    setSelectedUserProfile({ id: userId });
+    // FIXED: Using ID instead of full object
+    setViewProfileId(userId);
     setIsProfileOpen(true);
+  };
+
+  const handleOpenMyProfile = () => {
+    if (session) {
+      setViewProfileId(session.user.id);
+      setIsProfileOpen(true);
+    }
   };
 
   // --- Render ---
@@ -267,7 +297,7 @@ const App = () => {
       <Navbar 
         onOpenModal={() => setIsModalOpen(true)} 
         onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
-        onOpenProfile={() => setIsProfileOpen(true)}
+        onOpenProfile={handleOpenMyProfile}
         xp={userXP} 
         level={userLevel} 
         xpProgress={levelProgress} 
@@ -373,16 +403,12 @@ const App = () => {
         supabase={supabase}
       />
 
+      {/* FIXED: Passing userId and supabase client instead of user object */}
       <UserProfileModal 
         isOpen={isProfileOpen}
         onClose={() => setIsProfileOpen(false)}
-        user={selectedUserProfile || (session ? { 
-          name: session.user.user_metadata.full_name,
-          avatarUrl: session.user.user_metadata.avatar_url,
-          level: userLevel,
-          xp: userXP,
-          role: 'Current Node'
-        } : null)}
+        userId={viewProfileId}
+        supabase={supabase}
       />
     </div>
   );
