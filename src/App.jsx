@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js'; // Нормальный импорт
+import { createClient } from '@supabase/supabase-js';
 import { 
   Globe, Zap, MessageCircle, Cpu, ArrowRight, ShieldCheck, Activity, Languages, 
   Menu, X, Sparkles, MessageSquare, ThumbsUp, Share2, Plus, Loader2, Send, 
-  Trophy, User, CheckCircle2, Github, LogOut, Code2, Mail, Crown, Medal 
+  Trophy, User, CheckCircle2, Github, LogOut, Code2, Mail, Crown, Medal, AlertTriangle 
 } from 'lucide-react';
+import StartScreen from './components/StartScreen';
 
-// --- Supabase Configuration (Correct) ---
+// --- Supabase Configuration ---
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Initialize client immediately as we are using standard imports
+const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
 
 // --- Helpers ---
 const formatTimeAgo = (dateString) => {
@@ -198,36 +200,7 @@ const Navbar = ({ onOpenModal, onOpenLeaderboard, xp, level, xpProgress, session
   );
 };
 
-// 2. Language Ticker (Data Stream)
-const LanguageTicker = () => {
-  const connections = [
-    { from: 'UA', to: 'JP', time: '0.2s' },
-    { from: 'EN', to: 'ES', time: '0.1s' },
-    { from: 'FR', to: 'KR', time: '0.3s' },
-    { from: 'DE', to: 'PT', time: '0.2s' },
-    { from: 'CN', to: 'IT', time: '0.4s' },
-    { from: 'TR', to: 'RU', time: '0.1s' },
-  ];
-
-  return (
-    <div className="w-full bg-slate-900/50 border-y border-white/5 overflow-hidden py-3 backdrop-blur-sm relative z-20">
-      <div className="flex w-[200%] animate-marquee">
-        {[...connections, ...connections, ...connections].map((conn, i) => (
-          <div key={i} className="flex items-center gap-3 px-12 opacity-60 hover:opacity-100 transition-opacity cursor-default">
-            <span className="text-[10px] font-mono text-cyan-500 uppercase tracking-widest">Bridging</span>
-            <div className="flex items-center gap-2 px-3 py-1 rounded bg-slate-900 border border-slate-800">
-              <span className="font-semibold text-slate-200 text-xs">{conn.from}</span>
-              <Activity className="w-3 h-3 text-purple-400 animate-pulse" />
-              <span className="font-semibold text-slate-200 text-xs">{conn.to}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-// 3. XP Toast Notification
+// 2. XP Toast Notification
 const XPToast = ({ message, isVisible }) => {
   if (!isVisible) return null;
 
@@ -248,7 +221,7 @@ const XPToast = ({ message, isVisible }) => {
   );
 };
 
-// 4. Question Card Component
+// 3. Question Card Component
 const QuestionCard = ({ data, onSubmitAnswer, session, onLoginGithub, onLoginGoogle }) => {
   const [translated, setTranslated] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -441,7 +414,7 @@ const QuestionCard = ({ data, onSubmitAnswer, session, onLoginGithub, onLoginGoo
   );
 };
 
-// 5. Ask Question Modal Component
+// 4. Ask Question Modal Component
 const AskQuestionModal = ({ isOpen, onClose, onSubmit, session, onLoginGithub, onLoginGoogle }) => {
   const [formData, setFormData] = useState({ title: '', language: 'English', category: 'Technology', details: '' });
   
@@ -592,7 +565,7 @@ const AskQuestionModal = ({ isOpen, onClose, onSubmit, session, onLoginGithub, o
   );
 };
 
-// 6. Leaderboard Modal Component
+// 5. Leaderboard Modal Component
 const LeaderboardModal = ({ isOpen, onClose, supabase }) => {
   const [leaders, setLeaders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -710,140 +683,11 @@ const LeaderboardModal = ({ isOpen, onClose, supabase }) => {
 };
 
 
-// 7. Visual Hook (Premium Complex SoftSphere)
-const SoftSphere = () => {
-  return (
-    <div className="relative w-full h-[500px] md:h-[600px] flex items-center justify-center perspective-1000">
-      {/* Abstract Glowing Gradient Behind */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/20 via-purple-500/20 to-transparent blur-[100px] rounded-full animate-pulse" />
-      
-      {/* The Sphere Representation */}
-      <div className="relative w-64 h-64 md:w-96 md:h-96 animate-slow-spin transform-style-3d">
-        {/* Rings */}
-        <div className="absolute inset-0 border border-cyan-400/30 rounded-full shadow-[0_0_30px_rgba(6,182,212,0.1)]" />
-        <div className="absolute inset-0 border border-purple-500/30 rounded-full rotate-45 shadow-[0_0_30px_rgba(168,85,247,0.1)]" />
-        <div className="absolute inset-0 border border-white/10 rounded-full rotate-90" />
-        
-        {/* Orbiting Satellites (Language Tags) */}
-        {/* Satellite 1: JP */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-6 w-12 h-12 animate-orbit-1">
-           <div className="w-full h-full bg-slate-900/90 backdrop-blur-md border border-cyan-400 p-2 rounded-xl shadow-[0_0_25px_rgba(6,182,212,0.4)] flex items-center justify-center animate-counter-spin">
-              <span className="text-cyan-300 font-bold text-xs">JP</span>
-           </div>
-        </div>
-        
-        {/* Satellite 2: UA */}
-        <div className="absolute bottom-10 right-0 w-12 h-12 animate-orbit-2">
-           <div className="w-full h-full bg-slate-900/90 backdrop-blur-md border border-purple-500 p-2 rounded-xl shadow-[0_0_25px_rgba(168,85,247,0.4)] flex items-center justify-center animate-counter-spin">
-              <span className="text-purple-300 font-bold text-xs">UA</span>
-           </div>
-        </div>
-
-        {/* Satellite 3: EN */}
-        <div className="absolute top-1/2 left-0 -translate-x-6 w-auto h-auto animate-orbit-3">
-           <div className="bg-emerald-900/90 backdrop-blur-md border border-emerald-500 px-3 py-1 rounded-full shadow-[0_0_25px_rgba(16,185,129,0.4)] animate-counter-spin">
-              <span className="text-emerald-300 font-mono text-[10px] font-bold">+50 XP</span>
-           </div>
-        </div>
-
-        {/* Central Core */}
-        <div className="absolute inset-0 m-auto w-32 h-32 bg-slate-900/60 backdrop-blur-md rounded-full border border-white/20 flex items-center justify-center shadow-[inset_0_0_30px_rgba(255,255,255,0.1)]">
-           <Globe className="w-16 h-16 text-white/90 drop-shadow-[0_0_15px_rgba(255,255,255,0.6)] animate-pulse" />
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// 8. Hero Section
-const Hero = ({ onOpenModal, onLogin }) => {
-  return (
-    <section className="relative pt-32 pb-20 px-6 flex flex-col items-center justify-center overflow-hidden">
-      
-      {/* Background Decor */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none z-0">
-         <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-[120px] mix-blend-screen animate-pulse" style={{animationDuration: '4s'}}></div>
-         <div className="absolute bottom-0 right-[-10%] w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[120px] mix-blend-screen animate-pulse" style={{animationDuration: '7s'}}></div>
-      </div>
-
-      {/* Grid Pattern */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none z-0"></div>
-
-      <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10">
-        
-        {/* Text Content */}
-        <div className="text-left space-y-8">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md shadow-[0_0_15px_rgba(6,182,212,0.15)] animate-fade-in">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
-            </span>
-            <span className="text-xs font-mono text-cyan-300 tracking-wider font-bold">HYBRID INTELLIGENCE NETWORK</span>
-          </div>
-
-          {/* Headlines */}
-          <div className="space-y-4 animate-slide-in">
-            <h1 className="text-6xl md:text-8xl font-bold tracking-tighter text-white leading-[0.9]">
-              Global Mind.<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-blue-400 to-purple-500 drop-shadow-[0_0_30px_rgba(6,182,212,0.3)]">
-                Zero Barriers.
-              </span>
-            </h1>
-            <p className="text-xl md:text-2xl text-slate-300 max-w-xl leading-relaxed font-light">
-              Ask about <span className="text-white font-semibold border-b border-cyan-500/50">Life</span> or <span className="text-white font-semibold border-b border-purple-500/50">Tech</span>. 
-              Get answers from everywhere.
-            </p>
-          </div>
-
-          {/* CTA Group */}
-          <div className="flex flex-col sm:flex-row gap-5 animate-slide-in" style={{animationDelay: '0.2s'}}>
-            <button 
-              onClick={onOpenModal}
-              className="group relative px-8 py-5 bg-white text-slate-950 rounded-xl font-bold text-xl overflow-hidden transition-all hover:scale-105 shadow-[0_0_40px_-5px_rgba(6,182,212,0.4)] hover:shadow-[0_0_60px_-5px_rgba(6,182,212,0.6)]"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-cyan-300 via-white to-cyan-300 opacity-0 group-hover:opacity-50 transition-opacity duration-500 blur-lg" />
-              <span className="relative flex items-center gap-2">
-                Join the HiveMind <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
-              </span>
-            </button>
-            <button className="px-8 py-5 bg-white/5 border border-white/20 text-white rounded-xl font-bold text-xl backdrop-blur-sm hover:bg-white/10 hover:border-white/40 transition-all flex items-center justify-center gap-2">
-               <ShieldCheck className="w-6 h-6 text-slate-300" />
-               View Protocol
-            </button>
-          </div>
-
-          {/* Social Proof */}
-          <div className="pt-10 flex items-center gap-10 border-t border-white/10 animate-fade-in" style={{animationDelay: '0.4s'}}>
-            <div>
-              <p className="text-3xl font-mono font-bold text-white drop-shadow-md">12k+</p>
-              <p className="text-xs text-cyan-200/70 uppercase tracking-widest font-semibold">Active Nodes</p>
-            </div>
-            <div>
-              <p className="text-3xl font-mono font-bold text-white drop-shadow-md">40+</p>
-              <p className="text-xs text-cyan-200/70 uppercase tracking-widest font-semibold">Languages</p>
-            </div>
-            <div>
-              <p className="text-3xl font-mono font-bold text-white drop-shadow-md">∞XP</p>
-              <p className="text-xs text-cyan-200/70 uppercase tracking-widest font-semibold">Knowledge Mined</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Visual Hook Area */}
-        <div className="relative">
-          <SoftSphere />
-        </div>
-      </div>
-    </section>
-  );
-};
-
-
 // --- Main App Component ---
 
 const App = () => {
-  const [supabase, setSupabase] = useState(null);
+  // Use state to hold the client but initialize it immediately.
+  const [supabase] = useState(supabaseClient);
   const [session, setSession] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
@@ -857,26 +701,11 @@ const App = () => {
   const userLevel = Math.floor(userXP / 1000) + 1;
   const levelProgress = ((userXP % 1000) / 1000) * 100;
 
-  // --- Initialize Supabase Dynamically ---
+  // --- Configuration Check ---
   useEffect(() => {
-    const initSupabase = async () => {
-      // Configuration Check
-      if (supabaseUrl === "INSERT_YOUR_SUPABASE_URL_HERE" || !supabaseUrl.startsWith("http")) {
-         setConfigError("Configuration Required");
-         return;
-      }
-
-      try {
-        // Dynamically import Supabase to avoid build-time errors with URL imports
-        const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
-        const client = createClient(supabaseUrl, supabaseAnonKey);
-        setSupabase(client);
-      } catch (e) {
-        console.error("Failed to load Supabase:", e);
-        setConfigError("Failed to load Supabase library.");
-      }
-    };
-    initSupabase();
+    if (supabaseUrl === "INSERT_YOUR_SUPABASE_URL_HERE" || !supabaseUrl || !supabaseUrl.startsWith("http")) {
+       setConfigError("Configuration Required");
+    }
   }, []);
 
   // --- Session & Auth ---
@@ -1148,48 +977,7 @@ const App = () => {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-indigo-500/30 selection:text-white">
       <style>{`
-        @keyframes marquee {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-        .animate-marquee {
-          animation: marquee 30s linear infinite;
-        }
-        @keyframes slow-spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        .animate-slow-spin {
-          animation: slow-spin 20s linear infinite;
-        }
-        @keyframes bounce-slow {
-          0%, 100% { transform: translateY(-10px); }
-          50% { transform: translateY(10px); }
-        }
-        .animate-bounce-slow {
-          animation: bounce-slow 4s ease-in-out infinite;
-        }
-         @keyframes bounce-delayed {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-15px); }
-        }
-        .animate-bounce-delayed {
-          animation: bounce-delayed 5s ease-in-out infinite 1s;
-        }
-        @keyframes slide-in-top {
-          0% { transform: translateY(-20px); opacity: 0; }
-          100% { transform: translateY(0); opacity: 1; }
-        }
-        .animate-slide-in {
-          animation: slide-in-top 0.5s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
-        }
-        @keyframes fade-in {
-          0% { opacity: 0; }
-          100% { opacity: 1; }
-        }
-        .animate-fade-in {
-          animation: fade-in 0.5s ease-out forwards;
-        }
+        /* Shared Animations - Scale & Bounce needed for Modals/Toast */
         @keyframes scale-in {
           0% { transform: scale(0.95); opacity: 0; }
           100% { transform: scale(1); opacity: 1; }
@@ -1206,21 +994,34 @@ const App = () => {
         .animate-bounce-in {
           animation: bounce-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
-        @keyframes orbit-1 {
-          0% { transform: rotate(0deg) translateX(120px) rotate(0deg); }
-          100% { transform: rotate(360deg) translateX(120px) rotate(-360deg); }
+        
+        /* Fade In & Slide In (Also in StartScreen but defined here for global usage) */
+        @keyframes fade-in {
+          0% { opacity: 0; }
+          100% { opacity: 1; }
         }
-        @keyframes orbit-2 {
-          0% { transform: rotate(120deg) translateX(150px) rotate(-120deg); }
-          100% { transform: rotate(480deg) translateX(150px) rotate(-480deg); }
+        .animate-fade-in {
+          animation: fade-in 0.5s ease-out forwards;
         }
-        @keyframes orbit-3 {
-          0% { transform: rotate(240deg) translateX(100px) rotate(-240deg); }
-          100% { transform: rotate(600deg) translateX(100px) rotate(-600deg); }
+        @keyframes slide-in-top {
+          0% { transform: translateY(-20px); opacity: 0; }
+          100% { transform: translateY(0); opacity: 1; }
         }
-        .animate-orbit-1 { animation: orbit-1 20s linear infinite; }
-        .animate-orbit-2 { animation: orbit-2 25s linear infinite; }
-        .animate-orbit-3 { animation: orbit-3 18s linear infinite; }
+        .animate-slide-in {
+          animation: slide-in-top 0.5s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
+        }
+        
+        /* Custom Scrollbar for Leaderboard */
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.05);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.2);
+          border-radius: 4px;
+        }
       `}</style>
 
       {/* Navbar with RPG HUD */}
@@ -1237,8 +1038,11 @@ const App = () => {
       />
       
       <main>
-        <Hero onOpenModal={() => setIsModalOpen(true)} onLogin={handleLoginGithub} />
-        <LanguageTicker />
+        {/* New StartScreen Component replacing Hero & Ticker */}
+        <StartScreen 
+          onOpenModal={() => setIsModalOpen(true)} 
+          onLogin={handleLoginGithub} 
+        />
         
         {/* Question Feed */}
         <section className="py-24 px-6 relative z-10">

@@ -1,7 +1,36 @@
 import React from 'react';
-import { Globe, Activity, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Globe, ArrowRight, ShieldCheck, Activity } from 'lucide-react';
 
-// --- 1. Visual Hook (Premium Complex SoftSphere) ---
+// --- Sub-Component: Language Ticker ---
+const LanguageTicker = () => {
+  const connections = [
+    { from: 'UA', to: 'JP', time: '0.2s' },
+    { from: 'EN', to: 'ES', time: '0.1s' },
+    { from: 'FR', to: 'KR', time: '0.3s' },
+    { from: 'DE', to: 'PT', time: '0.2s' },
+    { from: 'CN', to: 'IT', time: '0.4s' },
+    { from: 'TR', to: 'RU', time: '0.1s' },
+  ];
+
+  return (
+    <div className="w-full bg-slate-900/50 border-y border-white/5 overflow-hidden py-3 backdrop-blur-sm relative z-20">
+      <div className="flex w-[200%] animate-marquee">
+        {[...connections, ...connections, ...connections].map((conn, i) => (
+          <div key={i} className="flex items-center gap-3 px-12 opacity-60 hover:opacity-100 transition-opacity cursor-default">
+            <span className="text-[10px] font-mono text-cyan-500 uppercase tracking-widest">Bridging</span>
+            <div className="flex items-center gap-2 px-3 py-1 rounded bg-slate-900 border border-slate-800">
+              <span className="font-semibold text-slate-200 text-xs">{conn.from}</span>
+              <Activity className="w-3 h-3 text-purple-400 animate-pulse" />
+              <span className="font-semibold text-slate-200 text-xs">{conn.to}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// --- Sub-Component: SoftSphere Visual ---
 const SoftSphere = () => {
   return (
     <div className="relative w-full h-[500px] md:h-[600px] flex items-center justify-center perspective-1000">
@@ -46,36 +75,7 @@ const SoftSphere = () => {
   );
 };
 
-// --- 2. Language Ticker (Data Stream) ---
-const LanguageTicker = () => {
-  const connections = [
-    { from: 'UA', to: 'JP', time: '0.2s' },
-    { from: 'EN', to: 'ES', time: '0.1s' },
-    { from: 'FR', to: 'KR', time: '0.3s' },
-    { from: 'DE', to: 'PT', time: '0.2s' },
-    { from: 'CN', to: 'IT', time: '0.4s' },
-    { from: 'TR', to: 'RU', time: '0.1s' },
-  ];
-
-  return (
-    <div className="w-full bg-slate-900/50 border-y border-white/5 overflow-hidden py-3 backdrop-blur-sm relative z-20">
-      <div className="flex w-[200%] animate-marquee">
-        {[...connections, ...connections, ...connections].map((conn, i) => (
-          <div key={i} className="flex items-center gap-3 px-12 opacity-60 hover:opacity-100 transition-opacity cursor-default">
-            <span className="text-[10px] font-mono text-cyan-500 uppercase tracking-widest">Bridging</span>
-            <div className="flex items-center gap-2 px-3 py-1 rounded bg-slate-900 border border-slate-800">
-              <span className="font-semibold text-slate-200 text-xs">{conn.from}</span>
-              <Activity className="w-3 h-3 text-purple-400 animate-pulse" />
-              <span className="font-semibold text-slate-200 text-xs">{conn.to}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-// --- 3. Hero Section ---
+// --- Sub-Component: Hero Section ---
 const Hero = ({ onOpenModal, onLogin }) => {
   return (
     <section className="relative pt-32 pb-20 px-6 flex flex-col items-center justify-center overflow-hidden">
@@ -159,12 +159,11 @@ const Hero = ({ onOpenModal, onLogin }) => {
   );
 };
 
-// --- Main Container Component ---
+// --- Main Export: StartScreen ---
 const StartScreen = ({ onOpenModal, onLogin }) => {
   return (
-    <div className="flex flex-col">
-       {/* Scoped Styles for Hero/Visual Animations */}
-       <style>{`
+    <>
+      <style>{`
         @keyframes marquee {
           0% { transform: translateX(0); }
           100% { transform: translateX(-50%); }
@@ -178,6 +177,20 @@ const StartScreen = ({ onOpenModal, onLogin }) => {
         }
         .animate-slow-spin {
           animation: slow-spin 20s linear infinite;
+        }
+        @keyframes slide-in-top {
+          0% { transform: translateY(-20px); opacity: 0; }
+          100% { transform: translateY(0); opacity: 1; }
+        }
+        .animate-slide-in {
+          animation: slide-in-top 0.5s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
+        }
+        @keyframes fade-in {
+          0% { opacity: 0; }
+          100% { opacity: 1; }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.5s ease-out forwards;
         }
         @keyframes orbit-1 {
           0% { transform: rotate(0deg) translateX(120px) rotate(0deg); }
@@ -195,25 +208,19 @@ const StartScreen = ({ onOpenModal, onLogin }) => {
         .animate-orbit-2 { animation: orbit-2 25s linear infinite; }
         .animate-orbit-3 { animation: orbit-3 18s linear infinite; }
         
-        @keyframes slide-in-top {
-          0% { transform: translateY(-20px); opacity: 0; }
-          100% { transform: translateY(0); opacity: 1; }
+        /* Helper to keep orbiting elements upright if needed */
+        @keyframes counter-spin {
+           from { transform: rotate(360deg); }
+           to { transform: rotate(0deg); }
         }
-        .animate-slide-in {
-          animation: slide-in-top 0.5s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
-        }
-        @keyframes fade-in {
-          0% { opacity: 0; }
-          100% { opacity: 1; }
-        }
-        .animate-fade-in {
-          animation: fade-in 0.5s ease-out forwards;
+        .animate-counter-spin {
+           animation: counter-spin 20s linear infinite; 
         }
       `}</style>
-
+      
       <Hero onOpenModal={onOpenModal} onLogin={onLogin} />
       <LanguageTicker />
-    </div>
+    </>
   );
 };
 
