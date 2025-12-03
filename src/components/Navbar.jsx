@@ -138,7 +138,7 @@ const Navbar = ({
             <>
               <div 
                 className="flex items-center gap-4 pb-4 border-b border-slate-800"
-                onClick={() => { onOpenProfile(); setMobileMenuOpen(false); }}
+                onClick={() => { onOpenProfile(session.user.id); setMobileMenuOpen(false); }}
               >
                  <div className="w-12 h-12 rounded-full bg-indigo-600 overflow-hidden">
                      <img src={session.user.user_metadata.avatar_url} alt="User" className="w-full h-full object-cover" />
