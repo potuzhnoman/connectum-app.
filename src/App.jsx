@@ -44,10 +44,9 @@ const getFlagAndCountry = (language) => {
   }
 };
 
-// --- MAIN APP ---
+// --- Main App Component ---
 const App = () => {
   // Database & Auth State
-  // Initialize client only once
   const [supabase] = useState(() => createClient(supabaseUrl, supabaseAnonKey));
   const [session, setSession] = useState(null);
   const [configError, setConfigError] = useState(null);
@@ -62,8 +61,10 @@ const App = () => {
   // Data State
   const [userXP, setUserXP] = useState(0); 
   const [questions, setQuestions] = useState([]);
-  const [viewProfileId, setViewProfileId] = useState(null);
   
+  // FIXED: Changed from selectedUserProfile object to ID string
+  const [viewProfileId, setViewProfileId] = useState(null);
+
   // Derived Stats
   const userLevel = Math.floor(userXP / 1000) + 1;
   const levelProgress = ((userXP % 1000) / 1000) * 100;
@@ -109,7 +110,7 @@ const App = () => {
     // Initial Fetch
     fetchQuestions();
 
-    // Realtime Subscription
+    // FIXED: Realtime Subscription to handle UI updates smoothly
     const channel = supabase
       .channel('public:questions')
       .on(
@@ -156,7 +157,6 @@ const App = () => {
           comments: q.replies ? q.replies.length : 0,
           replies: q.replies ? q.replies.map(r => ({
             id: r.id,
-            authorId: r.author_id,
             author: r.author_name,
             text: r.text,
             time: formatTimeAgo(r.created_at),
@@ -175,15 +175,21 @@ const App = () => {
 
   // --- Handlers ---
   const handleLoginGithub = async () => {
-    if (supabase) await supabase.auth.signInWithOAuth({ provider: 'github', options: { redirectTo: window.location.origin } });
+    await supabase.auth.signInWithOAuth({
+      provider: 'github',
+      options: { redirectTo: window.location.origin }
+    });
   };
 
   const handleLoginGoogle = async () => {
-    if (supabase) await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin }
+    });
   };
 
   const handleLogout = async () => {
-    if (supabase) await supabase.auth.signOut();
+    await supabase.auth.signOut();
     setSession(null);
   };
 
@@ -193,13 +199,13 @@ const App = () => {
     setToastMessage(`+${amount} XP - ${reason}`);
     setTimeout(() => setToastMessage(null), 3000);
 
-    if (session && supabase) {
+    if (session) {
       await supabase.from('profiles').update({ xp: newXP }).eq('id', session.user.id);
     }
   };
 
   const handleAddQuestion = async (formData) => {
-    if (!supabase || !session) return alert("Please login first.");
+    if (!session) return alert("Please login first.");
 
     const newQuestionPayload = {
       text: formData.title,
@@ -207,40 +213,46 @@ const App = () => {
       category: formData.category, 
       author_name: session.user.user_metadata.full_name || session.user.email,
       author_id: session.user.id,
-      author_avatar: session.user.user_metadata.avatar_url,
+      // FIXED: Removed author_avatar to prevent DB error
       xp_reward: 50
     };
 
     const { data, error } = await supabase.from('questions').insert([newQuestionPayload]).select();
 
     if (!error && data) {
-      // No manual fetch needed, Realtime handles it
+      // Fetch handled by Realtime subscription
       handleAddXP(50, "Posted Question");
       setIsModalOpen(false);
     }
   };
 
   const handleSubmitAnswer = async (questionId, text) => {
-    if (!supabase || !session) return alert("Please login first.");
+    if (!session) return alert("Please login first.");
 
     const replyPayload = {
       question_id: questionId,
       text: text,
       author_name: session.user.user_metadata.full_name || session.user.email,
-      author_id: session.user.id,
       avatar: session.user.user_metadata.avatar_url
     };
 
     const { data, error } = await supabase.from('replies').insert([replyPayload]).select();
 
     if (!error && data) {
+      // FIXED: Removed fetchQuestions() to prevent jerky UI. Realtime handles update.
       handleAddXP(100, "Solution Provided");
     }
   };
 
   const handleUserClick = (userId) => {
-    if (userId) {
-      setViewProfileId(userId);
+    // FIXED: Using ID instead of full object
+    setViewProfileId(userId);
+    setIsProfileOpen(true);
+  };
+
+  const handleOpenMyProfile = () => {
+    if (session) {
+      setViewProfileId(session.user.id);
       setIsProfileOpen(true);
     }
   };
@@ -267,7 +279,7 @@ const App = () => {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-indigo-500/30 selection:text-white">
-      {/* Global Styles for Animations */}
+      {/* Global Styles for Animations used by Modals */}
       <style>{`
         @keyframes scale-in { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         .animate-scale-in { animation: scale-in 0.2s ease-out forwards; }
@@ -285,7 +297,7 @@ const App = () => {
       <Navbar 
         onOpenModal={() => setIsModalOpen(true)} 
         onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
-        onOpenProfile={() => handleUserClick(session?.user?.id)}
+        onOpenProfile={handleOpenMyProfile}
         xp={userXP} 
         level={userLevel} 
         xpProgress={levelProgress} 
@@ -391,6 +403,7 @@ const App = () => {
         supabase={supabase}
       />
 
+      {/* FIXED: Passing userId and supabase client instead of user object */}
       <UserProfileModal 
         isOpen={isProfileOpen}
         onClose={() => setIsProfileOpen(false)}
