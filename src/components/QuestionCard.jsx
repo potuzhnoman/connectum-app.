@@ -46,7 +46,7 @@ const QuestionCard = ({
     >
       {/* Card Glow */}
       <div className={`absolute -inset-0.5 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-3xl opacity-0 group-hover:opacity-10 transition-opacity duration-500 blur-lg`} />
-Ф      <div className="absolute inset-0 bg-white/5 group-hover:bg-white/10 transition-colors duration-500" />
+      <div className="absolute inset-0 bg-white/5 group-hover:bg-white/10 transition-colors duration-500 pointer-events-none" />
       <div className="absolute inset-0 pointer-events-none shadow-[inset_0_25px_60px_-50px_rgba(255,255,255,0.35)]" />
 
       {/* Header */}
@@ -129,8 +129,9 @@ const QuestionCard = ({
 
         <div className="flex items-center gap-3">
            <button 
-             onClick={handleExpand}
-             className="text-pink-200/70 hover:text-pink-100 transition-colors flex items-center gap-1.5 text-xs font-medium hover:bg-pink-500/10 p-2 rounded-lg border border-transparent hover:border-pink-500/20"
+             onClick={() => !isSimulatingAI && handleExpand()}
+             disabled={isSimulatingAI}
+             className="text-pink-200/70 hover:text-pink-100 transition-colors flex items-center gap-1.5 text-xs font-medium hover:bg-pink-500/10 p-2 rounded-lg border border-transparent hover:border-pink-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
            >
              <MessageSquare className="w-4 h-4" /> 
              {data.comments}
