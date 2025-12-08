@@ -40,12 +40,14 @@ const QuestionCard = ({
 
   return (
     <div 
-      className={`relative p-6 rounded-3xl bg-slate-900/40 border border-white/5 hover:border-cyan-500/30 transition-all duration-500 hover:bg-slate-900/60 group ${data.isNew ? 'animate-slide-in' : ''}`}
+      className={`relative p-6 rounded-3xl bg-slate-900/45 backdrop-blur-xl border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] shadow-black/30 transition-all duration-500 hover:-translate-y-0.5 hover:shadow-[0_25px_70px_-40px_rgba(0,0,0,0.9)] hover:bg-slate-900/35 group ${data.isNew ? 'animate-slide-in' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Card Glow */}
       <div className={`absolute -inset-0.5 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-3xl opacity-0 group-hover:opacity-10 transition-opacity duration-500 blur-lg`} />
+Ф      <div className="absolute inset-0 bg-white/5 group-hover:bg-white/10 transition-colors duration-500" />
+      <div className="absolute inset-0 pointer-events-none shadow-[inset_0_25px_60px_-50px_rgba(255,255,255,0.35)]" />
 
       {/* Header */}
       <div className="flex items-center justify-between mb-5 relative z-10">
@@ -72,7 +74,7 @@ const QuestionCard = ({
                 {data.flag} {data.country}
               </span>
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">{data.timeAgo}</p>
+            <p className="text-xs font-mono text-gray-500 mt-0.5">{data.timeAgo}</p>
           </div>
         </div>
         <div className="flex items-center gap-1 text-amber-400 bg-amber-400/10 px-3 py-1 rounded-full border border-amber-400/20 shadow-[0_0_15px_rgba(245,158,11,0.1)]">
@@ -92,7 +94,7 @@ const QuestionCard = ({
           <div className="space-y-4 animate-fade-in">
              {/* Original Text */}
             <div className={`transition-all duration-500 ${translated ? 'opacity-40 scale-95 origin-left' : 'opacity-100'}`}>
-              <p className="text-xl text-slate-200 font-medium leading-relaxed font-light">
+              <p className="text-xl text-slate-100 font-medium leading-relaxed">
                 "{data.questionOriginal}"
               </p>
             </div>
@@ -101,7 +103,7 @@ const QuestionCard = ({
             <div className={`overflow-hidden transition-all duration-500 ease-in-out ${translated ? 'max-h-32 opacity-100' : 'max-h-0 opacity-0'}`}>
               <div className="flex gap-4 pl-4 border-l-2 border-cyan-500 bg-gradient-to-r from-cyan-900/10 to-transparent p-3 rounded-r-xl">
                 <Sparkles className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-1" />
-                <p className="text-lg text-cyan-100 font-medium leading-relaxed">
+                <p className="text-base text-gray-300 font-normal leading-relaxed">
                   {data.questionTranslated}
                 </p>
               </div>
@@ -117,8 +119,8 @@ const QuestionCard = ({
           disabled={isSimulatingAI}
           className={`flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl transition-all ${
             translated 
-              ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' 
-              : 'bg-slate-800/50 text-slate-400 hover:text-white hover:bg-slate-700'
+              ? 'bg-cyan-500/15 text-cyan-200 border border-cyan-400/30 shadow-[0_10px_30px_-20px_rgba(34,211,238,0.8)]' 
+              : 'bg-slate-800/60 text-slate-300 hover:text-white hover:bg-slate-700/80 border border-white/5'
           } ${isSimulatingAI ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           <Languages className="w-3.5 h-3.5" />
@@ -128,14 +130,16 @@ const QuestionCard = ({
         <div className="flex items-center gap-3">
            <button 
              onClick={handleExpand}
-             className="text-slate-500 hover:text-white transition-colors flex items-center gap-1.5 text-xs font-medium hover:bg-slate-800 p-2 rounded-lg"
+             className="text-pink-200/70 hover:text-pink-100 transition-colors flex items-center gap-1.5 text-xs font-medium hover:bg-pink-500/10 p-2 rounded-lg border border-transparent hover:border-pink-500/20"
            >
              <MessageSquare className="w-4 h-4" /> 
              {data.comments}
            </button>
            <button 
              onClick={() => !isSimulatingAI && handleExpand()}
-             className={`px-5 py-2 text-xs font-bold rounded-xl transition-all shadow-sm disabled:opacity-50 ${isExpanded ? 'bg-indigo-600 text-white shadow-indigo-500/20' : 'bg-slate-100 text-slate-900 hover:bg-white'}`} 
+             className={`px-5 py-2 text-xs font-bold rounded-xl transition-all shadow-lg disabled:opacity-50 ${isExpanded 
+              ? 'bg-gradient-to-r from-rose-500 to-orange-500 text-white shadow-rose-500/30' 
+              : 'bg-gradient-to-r from-orange-400 via-pink-500 to-rose-500 text-white hover:brightness-110'}`} 
              disabled={isSimulatingAI}
            >
              {isExpanded ? 'Close' : 'Answer'}
@@ -173,10 +177,10 @@ const QuestionCard = ({
               <div className="absolute inset-0 z-20 bg-slate-950/90 backdrop-blur-sm flex flex-col items-center justify-center rounded-xl border border-slate-800">
                  <p className="text-slate-300 text-sm mb-4 font-bold">Join the HiveMind to answer</p>
                  <div className="flex gap-3">
-                   <button onClick={onLoginGoogle} className="flex items-center gap-2 px-4 py-2 bg-white text-slate-900 text-xs font-bold rounded-lg transition-all hover:bg-slate-100">
+                   <button onClick={onLoginGoogle} className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs font-bold rounded-lg transition-all hover:shadow-lg hover:shadow-cyan-500/20">
                      <Mail className="w-3 h-3" /> Google
                    </button>
-                   <button onClick={onLoginGithub} className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white text-xs font-bold rounded-lg transition-all hover:bg-slate-700">
+                   <button onClick={onLoginGithub} className="flex items-center gap-2 px-4 py-2 bg-slate-900/70 border border-cyan-500/30 text-cyan-100 text-xs font-bold rounded-lg transition-all hover:bg-slate-900/50 hover:border-cyan-400/50">
                      <Github className="w-3 h-3" /> GitHub
                    </button>
                  </div>
