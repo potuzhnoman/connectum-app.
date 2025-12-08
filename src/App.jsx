@@ -149,6 +149,7 @@ const App = () => {
           name: q.author_name || 'Anonymous',
           country: country,
           flag: flag,
+          language: q.language,
           avatarUrl: q.author_avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${q.author_name}`,
           timeAgo: formatTimeAgo(q.created_at),
           questionOriginal: q.text,
@@ -322,15 +323,47 @@ const App = () => {
             </div>
 
             {loading ? (
-              <div className="flex flex-col items-center justify-center py-20">
-                <Loader2 className="w-12 h-12 text-cyan-500 animate-spin mb-4" />
-                <p className="text-slate-500 font-mono text-sm">SYNCING WITH HIVE MIND...</p>
+              <div className="space-y-4">
+                {[1,2,3].map((i) => (
+                  <div key={i} className="p-6 rounded-3xl bg-slate-900/40 border border-white/5 animate-pulse space-y-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full bg-slate-800" />
+                      <div className="space-y-2 flex-1">
+                        <div className="h-4 w-32 bg-slate-800 rounded" />
+                        <div className="h-3 w-24 bg-slate-800 rounded" />
+                      </div>
+                      <div className="h-4 w-16 bg-slate-800 rounded" />
+                    </div>
+                    <div className="h-6 w-full bg-slate-800 rounded" />
+                    <div className="h-6 w-5/6 bg-slate-800 rounded" />
+                    <div className="flex gap-3">
+                      <div className="h-8 w-24 bg-slate-800 rounded" />
+                      <div className="h-8 w-20 bg-slate-800 rounded" />
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : (
               <div className="space-y-6">
                 {questions.length === 0 ? (
-                  <div className="text-center py-10 text-slate-500 bg-slate-900/30 rounded-3xl border border-white/5 p-8 backdrop-blur-sm">
+                  <div className="text-center py-10 text-slate-500 bg-slate-900/30 rounded-3xl border border-white/5 p-8 backdrop-blur-sm space-y-4">
                      <p className="mb-2">No questions detected in the stream.</p>
+                     <div className="flex flex-col sm:flex-row justify-center gap-3">
+                        <button 
+                          onClick={() => setIsModalOpen(true)} 
+                          className="px-5 py-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 text-white text-sm font-bold shadow-lg shadow-cyan-500/25"
+                        >
+                          Ask Question
+                        </button>
+                        {!session && (
+                          <button 
+                            onClick={handleLoginGithub} 
+                            className="px-5 py-3 rounded-xl border border-cyan-500/40 text-cyan-100 text-sm font-bold"
+                          >
+                            Login
+                          </button>
+                        )}
+                     </div>
                   </div>
                 ) : (
                   questions.map(q => (
@@ -349,7 +382,15 @@ const App = () => {
             )}
             
             <div className="mt-12 text-center">
-              <button className="text-sm font-bold text-slate-500 hover:text-cyan-400 transition-colors flex items-center justify-center gap-2 mx-auto">
+              <button 
+                className="text-sm font-bold text-slate-500 hover:text-cyan-400 transition-colors flex items-center justify-center gap-2 mx-auto"
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }
+                  fetchQuestions(false);
+                }}
+              >
                 View Global Feed <ArrowRight className="w-4 h-4" />
               </button>
             </div>

@@ -72,7 +72,7 @@ const QuestionCard = ({
               </h4>
               <span 
                 className="text-[10px] bg-slate-800/80 px-2 py-0.5 rounded-full text-slate-300 flex items-center gap-1 border border-slate-700"
-                title={`${data.country}${data.language ? ' • ' + data.language : ''}`}
+                title={data.language ? `${data.country} • ${data.language}` : data.country}
               >
                 {data.flag} {data.country}
               </span>
@@ -114,6 +114,25 @@ const QuestionCard = ({
           </div>
         )}
       </div>
+
+      {/* Compact Reply Preview */}
+      {!isExpanded && data.replies && data.replies.length > 0 && (
+        <div className="mb-4 flex items-start gap-2 text-xs text-slate-400">
+          <div className="w-8 h-8 rounded-full bg-slate-800 overflow-hidden border border-white/10 flex-shrink-0">
+            <img src={data.replies[0].avatar} alt={data.replies[0].author} className="w-full h-full object-cover" />
+          </div>
+          <div className="flex-1 space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold text-cyan-300">{data.replies[0].author}</span>
+              <span className="text-[10px] text-slate-500">{data.replies[0].time}</span>
+            </div>
+            <p className="text-sm text-slate-300 line-clamp-2">{data.replies[0].text}</p>
+          </div>
+          {data.replies.length > 1 && (
+            <span className="text-[10px] text-slate-500 font-semibold flex-shrink-0">+{data.replies.length - 1} more</span>
+          )}
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex items-center justify-between pt-5 border-t border-white/5 relative z-10">
