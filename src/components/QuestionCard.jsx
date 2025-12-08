@@ -40,7 +40,7 @@ const QuestionCard = ({
 
   return (
     <div 
-      className={`relative p-6 rounded-3xl bg-slate-900/45 backdrop-blur-2xl border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] shadow-black/30 transition-all duration-500 hover:-translate-y-0.5 hover:shadow-[0_25px_70px_-40px_rgba(0,0,0,0.9)] hover:shadow-lg hover:shadow-black/40 hover:bg-slate-900/30 group ${data.isNew ? 'animate-slide-in' : ''}`}
+      className={`relative p-6 rounded-3xl bg-slate-900/45 backdrop-blur-2xl border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] shadow-black/30 transition-all duration-500 hover:-translate-y-0.5 hover:shadow-[0_25px_70px_-40px_rgba(0,0,0,0.9)] hover:shadow-lg hover:shadow-black/40 hover:bg-slate-900/30 group overflow-hidden ${data.isNew ? 'animate-slide-in' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -153,16 +153,16 @@ const QuestionCard = ({
            <button 
              onClick={() => !isSimulatingAI && handleExpand()}
              disabled={isSimulatingAI}
-             className="text-amber-50 transition-colors flex items-center gap-1.5 text-xs font-medium p-2 rounded-lg border border-orange-400/30 bg-gradient-to-r from-orange-400 via-pink-500 to-purple-600 hover:brightness-110 hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-orange-400/40"
+             className="px-4 py-2 text-pink-200 transition-colors flex items-center gap-1.5 text-xs font-medium rounded-lg border border-pink-400/40 bg-pink-500/20 hover:bg-pink-500/30 hover:shadow-lg hover:shadow-orange-500/20 hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-pink-400/40"
            >
              <MessageSquare className="w-4 h-4" /> 
              {data.comments}
            </button>
            <button 
              onClick={() => !isSimulatingAI && handleExpand()}
-             className={`px-5 py-2 text-xs font-bold rounded-xl transition-all shadow-lg disabled:opacity-50 hover:scale-[1.01] focus:outline-none focus:ring-2 focus:ring-orange-400/40 ${isExpanded 
-              ? 'bg-gradient-to-r from-rose-500 to-orange-500 text-amber-50 shadow-rose-500/30' 
-              : 'bg-gradient-to-r from-orange-400 via-pink-500 to-purple-600 text-amber-50 hover:brightness-110'}`} 
+             className={`px-4 py-2 text-xs font-bold rounded-xl transition-all shadow-lg disabled:opacity-50 hover:scale-[1.01] hover:shadow-lg hover:shadow-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-400/40 ${isExpanded 
+              ? 'bg-gradient-to-r from-rose-500 to-orange-500 text-white shadow-rose-500/30' 
+              : 'bg-gradient-to-r from-orange-500 to-pink-500 text-white border border-orange-400/30'}`} 
              disabled={isSimulatingAI}
            >
              {isExpanded ? 'Close' : 'Answer'}
