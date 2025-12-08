@@ -26,7 +26,7 @@ const AskQuestionModal = ({ isOpen, onClose, onSubmit, session, onLoginGithub, o
       />
       
       {/* Modal Content */}
-      <div className="relative w-full max-w-lg bg-slate-900 border border-white/10 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.5)] p-8 animate-scale-in overflow-hidden">
+      <div className="relative w-full max-w-lg bg-slate-900/70 backdrop-blur-md border border-white/10 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.5)] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] p-8 animate-scale-in overflow-hidden">
         {/* Glow effect */}
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500 via-purple-500 to-cyan-500" />
         
@@ -51,14 +51,14 @@ const AskQuestionModal = ({ isOpen, onClose, onSubmit, session, onLoginGithub, o
              <div className="space-y-3">
                <button 
                    onClick={onLoginGoogle}
-                   className="flex items-center justify-center gap-2 w-full px-5 py-4 bg-white text-slate-950 font-bold rounded-xl hover:bg-gray-100 transition-all shadow-lg"
+                   className="flex items-center justify-center gap-2 w-full px-5 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold rounded-xl hover:scale-[1.01] hover:shadow-lg hover:shadow-cyan-500/20 transition-all focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
                  >
                    <Mail className="w-5 h-5" />
                    Login with Google
                </button>
                <button 
                    onClick={onLoginGithub}
-                   className="flex items-center justify-center gap-2 w-full px-5 py-4 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl border border-slate-700 transition-all"
+                   className="flex items-center justify-center gap-2 w-full px-5 py-4 bg-slate-900/80 border border-cyan-500/30 text-cyan-100 font-bold rounded-xl hover:bg-slate-900/60 hover:border-cyan-400/50 hover:scale-[1.01] transition-all focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
                  >
                    <Github className="w-5 h-5" />
                    Login with GitHub
@@ -135,7 +135,7 @@ const AskQuestionModal = ({ isOpen, onClose, onSubmit, session, onLoginGithub, o
 
             <button 
               type="submit" 
-              className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-cyan-500/25 transition-all flex items-center justify-center gap-2 group transform hover:-translate-y-1"
+              className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-cyan-500/25 transition-all flex items-center justify-center gap-2 group transform hover:-translate-y-1 hover:scale-[1.01] focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
             >
               <span className="relative flex h-3 w-3 mr-1">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>

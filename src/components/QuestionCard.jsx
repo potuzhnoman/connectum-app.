@@ -40,7 +40,7 @@ const QuestionCard = ({
 
   return (
     <div 
-      className={`relative p-6 rounded-3xl bg-slate-900/45 backdrop-blur-xl border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] shadow-black/30 transition-all duration-500 hover:-translate-y-0.5 hover:shadow-[0_25px_70px_-40px_rgba(0,0,0,0.9)] hover:bg-slate-900/35 group ${data.isNew ? 'animate-slide-in' : ''}`}
+      className={`relative p-6 rounded-3xl bg-slate-900/45 backdrop-blur-2xl border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] shadow-black/30 transition-all duration-500 hover:-translate-y-0.5 hover:shadow-[0_25px_70px_-40px_rgba(0,0,0,0.9)] hover:shadow-lg hover:shadow-black/40 hover:bg-slate-900/30 group ${data.isNew ? 'animate-slide-in' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -70,11 +70,14 @@ const QuestionCard = ({
               >
                 {data.name}
               </h4>
-              <span className="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-300 flex items-center gap-1 border border-slate-700">
+              <span 
+                className="text-[10px] bg-slate-800/80 px-2 py-0.5 rounded-full text-slate-300 flex items-center gap-1 border border-slate-700"
+                title={`${data.country}${data.language ? ' • ' + data.language : ''}`}
+              >
                 {data.flag} {data.country}
               </span>
             </div>
-            <p className="text-xs font-mono text-gray-500 mt-0.5">{data.timeAgo}</p>
+            <p className="text-[11px] font-mono text-slate-500 mt-0.5">{data.timeAgo}</p>
           </div>
         </div>
         <div className="flex items-center gap-1 text-amber-400 bg-amber-400/10 px-3 py-1 rounded-full border border-amber-400/20 shadow-[0_0_15px_rgba(245,158,11,0.1)]">
@@ -94,7 +97,7 @@ const QuestionCard = ({
           <div className="space-y-4 animate-fade-in">
              {/* Original Text */}
             <div className={`transition-all duration-500 ${translated ? 'opacity-40 scale-95 origin-left' : 'opacity-100'}`}>
-              <p className="text-xl text-slate-100 font-medium leading-relaxed">
+              <p className="text-[19px] text-slate-100 font-medium leading-relaxed">
                 "{data.questionOriginal}"
               </p>
             </div>
@@ -117,10 +120,10 @@ const QuestionCard = ({
         <button 
           onClick={() => !isSimulatingAI && setTranslated(!translated)}
           disabled={isSimulatingAI}
-          className={`flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl transition-all ${
+          className={`flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl transition-all hover:scale-[1.01] focus:outline-none focus:ring-2 focus:ring-cyan-400/40 ${
             translated 
-              ? 'bg-cyan-500/15 text-cyan-200 border border-cyan-400/30 shadow-[0_10px_30px_-20px_rgba(34,211,238,0.8)]' 
-              : 'bg-slate-800/60 text-slate-300 hover:text-white hover:bg-slate-700/80 border border-white/5'
+              ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-cyan-50 border border-cyan-400/40 shadow-[0_10px_30px_-20px_rgba(34,211,238,0.8)]' 
+              : 'bg-slate-800/60 text-slate-300 hover:text-white hover:bg-slate-800 border border-cyan-400/30'
           } ${isSimulatingAI ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           <Languages className="w-3.5 h-3.5" />
@@ -131,16 +134,16 @@ const QuestionCard = ({
            <button 
              onClick={() => !isSimulatingAI && handleExpand()}
              disabled={isSimulatingAI}
-             className="text-pink-200/70 hover:text-pink-100 transition-colors flex items-center gap-1.5 text-xs font-medium hover:bg-pink-500/10 p-2 rounded-lg border border-transparent hover:border-pink-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+             className="text-amber-50 transition-colors flex items-center gap-1.5 text-xs font-medium p-2 rounded-lg border border-orange-400/30 bg-gradient-to-r from-orange-400 via-pink-500 to-purple-600 hover:brightness-110 hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-orange-400/40"
            >
              <MessageSquare className="w-4 h-4" /> 
              {data.comments}
            </button>
            <button 
              onClick={() => !isSimulatingAI && handleExpand()}
-             className={`px-5 py-2 text-xs font-bold rounded-xl transition-all shadow-lg disabled:opacity-50 ${isExpanded 
-              ? 'bg-gradient-to-r from-rose-500 to-orange-500 text-white shadow-rose-500/30' 
-              : 'bg-gradient-to-r from-orange-400 via-pink-500 to-rose-500 text-white hover:brightness-110'}`} 
+             className={`px-5 py-2 text-xs font-bold rounded-xl transition-all shadow-lg disabled:opacity-50 hover:scale-[1.01] focus:outline-none focus:ring-2 focus:ring-orange-400/40 ${isExpanded 
+              ? 'bg-gradient-to-r from-rose-500 to-orange-500 text-amber-50 shadow-rose-500/30' 
+              : 'bg-gradient-to-r from-orange-400 via-pink-500 to-purple-600 text-amber-50 hover:brightness-110'}`} 
              disabled={isSimulatingAI}
            >
              {isExpanded ? 'Close' : 'Answer'}
@@ -178,10 +181,10 @@ const QuestionCard = ({
               <div className="absolute inset-0 z-20 bg-slate-950/90 backdrop-blur-sm flex flex-col items-center justify-center rounded-xl border border-slate-800">
                  <p className="text-slate-300 text-sm mb-4 font-bold">Join the HiveMind to answer</p>
                  <div className="flex gap-3">
-                   <button onClick={onLoginGoogle} className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs font-bold rounded-lg transition-all hover:shadow-lg hover:shadow-cyan-500/20">
+                   <button onClick={onLoginGoogle} className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs font-bold rounded-lg transition-all hover:shadow-lg hover:shadow-cyan-500/20 hover:scale-[1.01] focus:outline-none focus:ring-2 focus:ring-cyan-400/40">
                      <Mail className="w-3 h-3" /> Google
                    </button>
-                   <button onClick={onLoginGithub} className="flex items-center gap-2 px-4 py-2 bg-slate-900/70 border border-cyan-500/30 text-cyan-100 text-xs font-bold rounded-lg transition-all hover:bg-slate-900/50 hover:border-cyan-400/50">
+                   <button onClick={onLoginGithub} className="flex items-center gap-2 px-4 py-2 bg-slate-900/70 border border-cyan-500/30 text-cyan-100 text-xs font-bold rounded-lg transition-all hover:bg-slate-900/50 hover:border-cyan-400/50 hover:scale-[1.01] focus:outline-none focus:ring-2 focus:ring-cyan-400/40">
                      <Github className="w-3 h-3" /> GitHub
                    </button>
                  </div>
