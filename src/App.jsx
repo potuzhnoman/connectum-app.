@@ -11,6 +11,7 @@ import QuestionCard from './components/QuestionCard';
 import AskQuestionModal from './components/AskQuestionModal';
 import LeaderboardModal from './components/LeaderboardModal';
 import UserProfileModal from './components/UserProfileModal';
+import ManifestoModal from './components/ManifestoModal';
 import XPToast from './components/XPToast';
 
 // --- Supabase Configuration ---
@@ -71,6 +72,8 @@ const App = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isManifestoOpen, setIsManifestoOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
   const [statusToast, setStatusToast] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -110,6 +113,24 @@ const App = () => {
       }
     };
   }, []);
+
+  // Update active section on scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      const questionsSection = document.getElementById('questions-section');
+      if (questionsSection) {
+        const rect = questionsSection.getBoundingClientRect();
+        const isVisible = rect.top <= 150 && rect.bottom >= 150;
+        if (isVisible && activeSection !== 'explore') {
+          setActiveSection('explore');
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    handleScroll(); // Check on mount
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [activeSection]);
 
   // --- 1. Configuration Check ---
   useEffect(() => {
@@ -340,6 +361,26 @@ const App = () => {
     }
   };
 
+  // Navigation handlers
+  const handleExploreClick = () => {
+    setActiveSection('explore');
+    const questionsSection = document.getElementById('questions-section');
+    if (questionsSection) {
+      const offsetTop = questionsSection.offsetTop - 100;
+      window.scrollTo({ top: offsetTop, behavior: 'smooth' });
+    }
+  };
+
+  const handleCommunityClick = () => {
+    setActiveSection('community');
+    setIsLeaderboardOpen(true);
+  };
+
+  const handleManifestoClick = () => {
+    setActiveSection('manifesto');
+    setIsManifestoOpen(true);
+  };
+
   // --- Render ---
 
   if (configError) {
@@ -379,8 +420,13 @@ const App = () => {
 
       <Navbar 
         onOpenModal={() => setIsModalOpen(true)} 
-        onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
+        onOpenLeaderboard={() => setIsLeaderboardOpen(true)} 
         onOpenProfile={handleOpenMyProfile}
+        onExploreClick={handleExploreClick}
+        onCommunityClick={handleCommunityClick}
+        onManifestoClick={handleManifestoClick}
+        activeSection={activeSection}
+        setActiveSection={setActiveSection}
         xp={userXP} 
         level={userLevel} 
         xpProgress={levelProgress} 
@@ -396,7 +442,7 @@ const App = () => {
           onLogin={handleLoginGithub} 
         />
         
-        <section className="py-24 px-6 relative z-10">
+        <section id="questions-section" className="py-24 px-6 relative z-10">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-5xl h-full bg-cyan-900/10 blur-[100px] -z-10 rounded-full mix-blend-screen" />
           <div className="max-w-3xl mx-auto">
             <div className="text-center mb-16 animate-fade-in">
@@ -525,7 +571,10 @@ const App = () => {
       
       <LeaderboardModal 
         isOpen={isLeaderboardOpen}
-        onClose={() => setIsLeaderboardOpen(false)}
+        onClose={() => {
+          setIsLeaderboardOpen(false);
+          setActiveSection(null);
+        }}
         supabase={supabase}
       />
 
@@ -535,6 +584,14 @@ const App = () => {
         onClose={() => setIsProfileOpen(false)}
         userId={viewProfileId}
         supabase={supabase}
+      />
+
+      <ManifestoModal 
+        isOpen={isManifestoOpen}
+        onClose={() => {
+          setIsManifestoOpen(false);
+          setActiveSection(null);
+        }}
       />
     </div>
   );

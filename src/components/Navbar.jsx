@@ -5,6 +5,11 @@ const Navbar = ({
   onOpenModal, 
   onOpenLeaderboard, 
   onOpenProfile, // Added prop
+  onExploreClick,
+  onCommunityClick,
+  onManifestoClick,
+  activeSection,
+  setActiveSection,
   xp, 
   level, 
   xpProgress, 
@@ -40,11 +45,43 @@ const Navbar = ({
 
         {/* Desktop Nav */}
         <div className="hidden md:flex items-center gap-8">
-          {['Explore', 'Community', 'Manifesto'].map((item) => (
-            <a key={item} href="#" className="text-sm font-medium text-slate-400 hover:text-cyan-300 transition-colors">
-              {item}
-            </a>
-          ))}
+          <button
+            onClick={() => {
+              onExploreClick();
+            }}
+            className={`text-sm font-medium transition-colors pb-1 ${
+              activeSection === 'explore'
+                ? 'text-cyan-300 border-b-2 border-cyan-400'
+                : 'text-slate-400 hover:text-cyan-300'
+            }`}
+          >
+            Explore
+          </button>
+          <button
+            onClick={() => {
+              onCommunityClick();
+            }}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all text-sm font-medium ${
+              activeSection === 'community'
+                ? 'bg-amber-500/20 border border-amber-500/30 text-amber-300'
+                : 'bg-amber-500/10 border border-amber-500/20 text-amber-400 hover:bg-amber-500/20'
+            }`}
+          >
+            <Trophy className="w-4 h-4" />
+            Community
+          </button>
+          <button
+            onClick={() => {
+              onManifestoClick();
+            }}
+            className={`text-sm font-medium transition-colors pb-1 ${
+              activeSection === 'manifesto'
+                ? 'text-cyan-300 border-b-2 border-cyan-400'
+                : 'text-slate-400 hover:text-cyan-300'
+            }`}
+          >
+            Manifesto
+          </button>
 
           {/* Leaderboard Trigger */}
           <button 
@@ -137,8 +174,8 @@ const Navbar = ({
           {session ? (
             <>
               <div 
-                className="flex items-center gap-4 pb-4 border-b border-slate-800"
-                onClick={() => { onOpenProfile(session.user.id); setMobileMenuOpen(false); }}
+                className="flex items-center gap-4 pb-4 border-b border-slate-800 cursor-pointer"
+                onClick={() => { onOpenProfile(); setMobileMenuOpen(false); }}
               >
                  <div className="w-12 h-12 rounded-full bg-indigo-600 overflow-hidden">
                      <img src={session.user.user_metadata.avatar_url} alt="User" className="w-full h-full object-cover" />
@@ -148,6 +185,50 @@ const Navbar = ({
                    <div className="text-cyan-400 text-xs font-bold">Lvl {level} • {xp} XP</div>
                  </div>
               </div>
+              
+              {/* Navigation Tabs */}
+              <div className="flex flex-col gap-2 pb-4 border-b border-slate-800">
+                <button
+                  onClick={() => {
+                    onExploreClick();
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`text-left py-2 px-3 rounded-lg transition-colors ${
+                    activeSection === 'explore'
+                      ? 'text-cyan-300 bg-cyan-500/10 border border-cyan-500/30'
+                      : 'text-slate-400 hover:text-cyan-300 hover:bg-slate-800/50'
+                  }`}
+                >
+                  Explore
+                </button>
+                <button
+                  onClick={() => {
+                    onCommunityClick();
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`text-left py-2 px-3 rounded-lg transition-colors ${
+                    activeSection === 'community'
+                      ? 'text-cyan-300 bg-cyan-500/10 border border-cyan-500/30'
+                      : 'text-slate-400 hover:text-cyan-300 hover:bg-slate-800/50'
+                  }`}
+                >
+                  Community
+                </button>
+                <button
+                  onClick={() => {
+                    onManifestoClick();
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`text-left py-2 px-3 rounded-lg transition-colors ${
+                    activeSection === 'manifesto'
+                      ? 'text-cyan-300 bg-cyan-500/10 border border-cyan-500/30'
+                      : 'text-slate-400 hover:text-cyan-300 hover:bg-slate-800/50'
+                  }`}
+                >
+                  Manifesto
+                </button>
+              </div>
+
               <button onClick={() => { onOpenModal(); setMobileMenuOpen(false); }} className="w-full py-3 bg-cyan-600 text-white rounded-lg font-bold">
                 Ask Question
               </button>
@@ -159,14 +240,59 @@ const Navbar = ({
               </button>
             </>
           ) : (
-            <div className="flex flex-col gap-3">
-              <button onClick={() => { onLoginGoogle(); setMobileMenuOpen(false); }} className="w-full py-3 bg-white text-slate-900 rounded-lg font-bold flex items-center justify-center gap-2">
-                <Mail className="w-5 h-5" /> Login with Google
-              </button>
-              <button onClick={() => { onLoginGithub(); setMobileMenuOpen(false); }} className="w-full py-3 bg-slate-800 text-white rounded-lg font-bold flex items-center justify-center gap-2">
-                <Github className="w-5 h-5" /> Login with GitHub
-              </button>
-            </div>
+            <>
+              {/* Navigation Tabs for non-logged users */}
+              <div className="flex flex-col gap-2 pb-4 border-b border-slate-800">
+                <button
+                  onClick={() => {
+                    onExploreClick();
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`text-left py-2 px-3 rounded-lg transition-colors ${
+                    activeSection === 'explore'
+                      ? 'text-cyan-300 bg-cyan-500/10 border border-cyan-500/30'
+                      : 'text-slate-400 hover:text-cyan-300 hover:bg-slate-800/50'
+                  }`}
+                >
+                  Explore
+                </button>
+                <button
+                  onClick={() => {
+                    onCommunityClick();
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`text-left py-2 px-3 rounded-lg transition-colors ${
+                    activeSection === 'community'
+                      ? 'text-cyan-300 bg-cyan-500/10 border border-cyan-500/30'
+                      : 'text-slate-400 hover:text-cyan-300 hover:bg-slate-800/50'
+                  }`}
+                >
+                  Community
+                </button>
+                <button
+                  onClick={() => {
+                    onManifestoClick();
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`text-left py-2 px-3 rounded-lg transition-colors ${
+                    activeSection === 'manifesto'
+                      ? 'text-cyan-300 bg-cyan-500/10 border border-cyan-500/30'
+                      : 'text-slate-400 hover:text-cyan-300 hover:bg-slate-800/50'
+                  }`}
+                >
+                  Manifesto
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <button onClick={() => { onLoginGoogle(); setMobileMenuOpen(false); }} className="w-full py-3 bg-white text-slate-900 rounded-lg font-bold flex items-center justify-center gap-2">
+                  <Mail className="w-5 h-5" /> Login with Google
+                </button>
+                <button onClick={() => { onLoginGithub(); setMobileMenuOpen(false); }} className="w-full py-3 bg-slate-800 text-white rounded-lg font-bold flex items-center justify-center gap-2">
+                  <Github className="w-5 h-5" /> Login with GitHub
+                </button>
+              </div>
+            </>
           )}
         </div>
       )}
