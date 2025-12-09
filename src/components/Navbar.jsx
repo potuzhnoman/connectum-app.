@@ -6,7 +6,6 @@ const Navbar = ({
   onOpenLeaderboard, 
   onOpenProfile, // Added prop
   onExploreClick,
-  onCommunityClick,
   onManifestoClick,
   activeSection,
   setActiveSection,
@@ -56,19 +55,6 @@ const Navbar = ({
             }`}
           >
             Explore
-          </button>
-          <button
-            onClick={() => {
-              onCommunityClick();
-            }}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all text-sm font-medium ${
-              activeSection === 'community'
-                ? 'bg-amber-500/20 border border-amber-500/30 text-amber-300'
-                : 'bg-amber-500/10 border border-amber-500/20 text-amber-400 hover:bg-amber-500/20'
-            }`}
-          >
-            <Trophy className="w-4 h-4" />
-            Community
           </button>
           <button
             onClick={() => {
@@ -203,19 +189,6 @@ const Navbar = ({
                 </button>
                 <button
                   onClick={() => {
-                    onCommunityClick();
-                    setMobileMenuOpen(false);
-                  }}
-                  className={`text-left py-2 px-3 rounded-lg transition-colors ${
-                    activeSection === 'community'
-                      ? 'text-cyan-300 bg-cyan-500/10 border border-cyan-500/30'
-                      : 'text-slate-400 hover:text-cyan-300 hover:bg-slate-800/50'
-                  }`}
-                >
-                  Community
-                </button>
-                <button
-                  onClick={() => {
                     onManifestoClick();
                     setMobileMenuOpen(false);
                   }}
@@ -255,19 +228,6 @@ const Navbar = ({
                   }`}
                 >
                   Explore
-                </button>
-                <button
-                  onClick={() => {
-                    onCommunityClick();
-                    setMobileMenuOpen(false);
-                  }}
-                  className={`text-left py-2 px-3 rounded-lg transition-colors ${
-                    activeSection === 'community'
-                      ? 'text-cyan-300 bg-cyan-500/10 border border-cyan-500/30'
-                      : 'text-slate-400 hover:text-cyan-300 hover:bg-slate-800/50'
-                  }`}
-                >
-                  Community
                 </button>
                 <button
                   onClick={() => {
