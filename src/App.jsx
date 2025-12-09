@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { 
   Cpu, Plus, Loader2, ArrowRight, AlertTriangle 
@@ -44,6 +44,22 @@ const getFlagAndCountry = (language) => {
   }
 };
 
+const StatusToast = ({ toast }) => {
+  if (!toast) return null;
+
+  const isError = toast.type === 'error';
+  const borderClass = isError ? 'border-rose-400/30' : 'border-emerald-400/30';
+  const textClass = isError ? 'text-rose-100' : 'text-emerald-100';
+
+  return (
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[90] animate-bounce-in">
+      <div className={`px-5 py-3 rounded-xl bg-slate-900/90 backdrop-blur-lg border ${borderClass} shadow-lg shadow-black/40 min-w-[240px] text-center`}>
+        <p className={`text-sm font-semibold ${textClass}`}>{toast.message}</p>
+      </div>
+    </div>
+  );
+};
+
 // --- Main App Component ---
 const App = () => {
   // Database & Auth State
@@ -56,6 +72,7 @@ const App = () => {
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
+  const [statusToast, setStatusToast] = useState(null);
   const [loading, setLoading] = useState(true);
   
   // Data State
@@ -65,9 +82,34 @@ const App = () => {
   // FIXED: Changed from selectedUserProfile object to ID string
   const [viewProfileId, setViewProfileId] = useState(null);
 
+  // Track timeout ID to prevent premature clearing
+  const toastTimeoutRef = useRef(null);
+
   // Derived Stats
   const userLevel = Math.floor(userXP / 1000) + 1;
   const levelProgress = ((userXP % 1000) / 1000) * 100;
+
+  const showStatusToast = (message, type = 'success') => {
+    // Clear any existing timeout to prevent premature clearing
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
+    
+    setStatusToast({ message, type });
+    toastTimeoutRef.current = setTimeout(() => {
+      setStatusToast(null);
+      toastTimeoutRef.current = null;
+    }, 3000);
+  };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // --- 1. Configuration Check ---
   useEffect(() => {
@@ -130,6 +172,35 @@ const App = () => {
     };
   }, [supabase]);
 
+  // Preserve original overflow to avoid locking scroll when modals toggle quickly
+  const bodyOverflowRef = useRef(null);
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const anyModalOpen = isModalOpen || isLeaderboardOpen || isProfileOpen;
+
+    if (anyModalOpen) {
+      // Capture original overflow only when moving from unlocked to locked
+      if (bodyOverflowRef.current === null) {
+        bodyOverflowRef.current = document.body.style.overflow;
+      }
+      document.body.style.overflow = 'hidden';
+    } else {
+      // Restore once all modals are closed
+      if (bodyOverflowRef.current !== null) {
+        document.body.style.overflow = bodyOverflowRef.current || '';
+        bodyOverflowRef.current = null;
+      }
+    }
+
+    return () => {
+      // On unmount, ensure body overflow is restored
+      if (bodyOverflowRef.current !== null) {
+        document.body.style.overflow = bodyOverflowRef.current || '';
+        bodyOverflowRef.current = null;
+      }
+    };
+  }, [isModalOpen, isLeaderboardOpen, isProfileOpen]);
+
   const fetchQuestions = async (showLoading = true) => {
     try {
       if (showLoading) setLoading(true);
@@ -169,6 +240,7 @@ const App = () => {
       setQuestions(formattedQuestions);
     } catch (error) {
       console.error('Error fetching questions:', error);
+      showStatusToast(error.message || 'Failed to fetch questions', 'error');
     } finally {
       if (showLoading) setLoading(false);
     }
@@ -218,12 +290,17 @@ const App = () => {
       xp_reward: 50
     };
 
-    const { data, error } = await supabase.from('questions').insert([newQuestionPayload]).select();
+    try {
+      const { data, error } = await supabase.from('questions').insert([newQuestionPayload]).select();
+      if (error) throw error;
 
-    if (!error && data) {
-      // Fetch handled by Realtime subscription
-      handleAddXP(50, "Posted Question");
-      setIsModalOpen(false);
+      if (data) {
+        handleAddXP(50, "Posted Question");
+        setIsModalOpen(false);
+        showStatusToast("Question posted", 'success');
+      }
+    } catch (error) {
+      showStatusToast(error.message || "Failed to post question", 'error');
     }
   };
 
@@ -237,11 +314,16 @@ const App = () => {
       avatar: session.user.user_metadata.avatar_url
     };
 
-    const { data, error } = await supabase.from('replies').insert([replyPayload]).select();
+    try {
+      const { data, error } = await supabase.from('replies').insert([replyPayload]).select();
+      if (error) throw error;
 
-    if (!error && data) {
-      // FIXED: Removed fetchQuestions() to prevent jerky UI. Realtime handles update.
-      handleAddXP(100, "Solution Provided");
+      if (data) {
+        handleAddXP(100, "Solution Provided");
+        showStatusToast("Answer posted", 'success');
+      }
+    } catch (error) {
+      showStatusToast(error.message || "Failed to post answer", 'error');
     }
   };
 
@@ -428,6 +510,7 @@ const App = () => {
         message={toastMessage} 
         isVisible={!!toastMessage} 
       />
+      <StatusToast toast={statusToast} />
 
       <AskQuestionModal 
         isOpen={isModalOpen} 

@@ -45,7 +45,7 @@ const QuestionCard = ({
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Card Glow */}
-      <div className={`absolute -inset-0.5 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-3xl opacity-0 group-hover:opacity-10 transition-opacity duration-500 blur-lg`} />
+      <div className={`absolute -inset-0.5 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-3xl opacity-0 group-hover:opacity-20 group-hover:outline group-hover:outline-1 group-hover:outline-cyan-400/30 transition-opacity duration-500 blur-lg`} />
       <div className="absolute inset-0 bg-white/5 group-hover:bg-white/10 transition-colors duration-500 pointer-events-none" />
       <div className="absolute inset-0 pointer-events-none shadow-[inset_0_25px_60px_-50px_rgba(255,255,255,0.35)]" />
 
