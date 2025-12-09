@@ -457,6 +457,8 @@ const App = () => {
                       onLoginGithub={handleLoginGithub}
                       onLoginGoogle={handleLoginGoogle}
                       onUserClick={handleUserClick}
+                      supabase={supabase}
+                      onErrorToast={showStatusToast}
                     />
                   ))
                 )}

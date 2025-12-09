@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Zap, Loader2, Sparkles, Languages, MessageSquare, Mail, Github, Send, CheckCircle2 } from 'lucide-react';
+import { Zap, Loader2, Sparkles, Languages, MessageSquare, Mail, Github, Send, CheckCircle2, Heart } from 'lucide-react';
 
 const QuestionCard = ({ 
   data, 
@@ -7,13 +7,17 @@ const QuestionCard = ({
   session, 
   onLoginGithub, 
   onLoginGoogle,
-  onUserClick // Added prop
+  onUserClick, // Added prop
+  supabase, // Supabase client for likes
+  onErrorToast // Error toast handler
 }) => {
   const [translated, setTranslated] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isSimulatingAI, setIsSimulatingAI] = useState(data.isNew || false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [answerText, setAnswerText] = useState("");
+  const [isLiked, setIsLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(0);
 
   useEffect(() => {
     if (isSimulatingAI) {
@@ -23,6 +27,91 @@ const QuestionCard = ({
       return () => clearTimeout(timer);
     }
   }, [isSimulatingAI]);
+
+  // Fetch initial like state and count
+  useEffect(() => {
+    if (!supabase || !data?.id) return;
+
+    const fetchLikes = async () => {
+      try {
+        // Fetch total likes count
+        const { count, error: countError } = await supabase
+          .from('likes')
+          .select('*', { count: 'exact', head: true })
+          .eq('question_id', data.id);
+
+        if (countError) throw countError;
+        setLikesCount(count || 0);
+
+        // Check if current user has liked this question
+        if (session?.user?.id) {
+          const { data: likeData, error: likeError } = await supabase
+            .from('likes')
+            .select('id')
+            .eq('question_id', data.id)
+            .eq('user_id', session.user.id)
+            .single();
+
+          if (likeError && likeError.code !== 'PGRST116') throw likeError; // PGRST116 = no rows returned
+          setIsLiked(!!likeData);
+        }
+      } catch (error) {
+        console.error('Error fetching likes:', error);
+      }
+    };
+
+    fetchLikes();
+  }, [supabase, data?.id, session?.user?.id]);
+
+  // Toggle like with optimistic UI updates
+  const toggleLike = async () => {
+    if (!session) {
+      if (onErrorToast) {
+        onErrorToast('Please login to like questions', 'error');
+      }
+      return;
+    }
+
+    if (!supabase || !data?.id) return;
+
+    // Optimistic update
+    const previousLiked = isLiked;
+    const previousCount = likesCount;
+    
+    setIsLiked(!isLiked);
+    setLikesCount(prev => isLiked ? prev - 1 : prev + 1);
+
+    try {
+      if (previousLiked) {
+        // Unlike: delete the like
+        const { error } = await supabase
+          .from('likes')
+          .delete()
+          .eq('question_id', data.id)
+          .eq('user_id', session.user.id);
+
+        if (error) throw error;
+      } else {
+        // Like: insert new like
+        const { error } = await supabase
+          .from('likes')
+          .insert({
+            question_id: data.id,
+            user_id: session.user.id
+          });
+
+        if (error) throw error;
+      }
+    } catch (error) {
+      // Revert optimistic update on error
+      setIsLiked(previousLiked);
+      setLikesCount(previousCount);
+      
+      if (onErrorToast) {
+        onErrorToast(error.message || 'Failed to update like', 'error');
+      }
+    }
+  };
 
   const handleAnswerSubmit = () => {
     if (!session) {
@@ -150,6 +239,18 @@ const QuestionCard = ({
         </button>
 
         <div className="flex items-center gap-3">
+           <button 
+             onClick={() => !isSimulatingAI && toggleLike()}
+             disabled={isSimulatingAI}
+             className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-pink-400/40 active:scale-90 ${
+               isLiked
+                 ? 'text-pink-500 shadow-[0_0_20px_rgba(236,72,153,0.5)]'
+                 : 'text-slate-500'
+             }`}
+           >
+             <Heart className={`w-4 h-4 transition-all ${isLiked ? 'fill-pink-500 text-pink-500' : ''}`} />
+             <span className="text-xs font-medium">{likesCount}</span>
+           </button>
            <button 
              onClick={() => !isSimulatingAI && handleExpand()}
              disabled={isSimulatingAI}
