@@ -423,7 +423,6 @@ const App = () => {
         onOpenLeaderboard={() => setIsLeaderboardOpen(true)} 
         onOpenProfile={handleOpenMyProfile}
         onExploreClick={handleExploreClick}
-        onCommunityClick={handleCommunityClick}
         onManifestoClick={handleManifestoClick}
         activeSection={activeSection}
         setActiveSection={setActiveSection}
