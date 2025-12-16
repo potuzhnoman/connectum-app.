@@ -245,7 +245,7 @@ const App = () => {
           avatarUrl: q.author_avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${q.author_name}`,
           timeAgo: formatTimeAgo(q.created_at),
           questionOriginal: q.text,
-          questionTranslated: q.text + " (AI Translated)", 
+          questionTranslated: null, // Translation loaded on-demand
           xp: q.xp_reward || 0,
           comments: q.replies ? q.replies.length : 0,
           replies: q.replies ? q.replies.map(r => ({
@@ -543,13 +543,6 @@ const App = () => {
           </div>
         </div>
       </footer>
-
-      <button 
-        onClick={() => setIsModalOpen(true)}
-        className="fixed bottom-8 right-8 z-40 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-transform shadow-cyan-500/40"
-      >
-        <Plus className="w-6 h-6" />
-      </button>
 
       {/* --- Modals & Toasts --- */}
       

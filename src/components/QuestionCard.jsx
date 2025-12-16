@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Zap, Loader2, Sparkles, Languages, MessageSquare, Mail, Github, Send, CheckCircle2, Heart } from 'lucide-react';
+import { Zap, Loader2, Sparkles, Languages, MessageSquare, Mail, Github, Send, CheckCircle2, Heart, Cpu } from 'lucide-react';
+import { translateText } from '../utils/translator';
 
 const QuestionCard = ({ 
   data, 
@@ -18,6 +19,8 @@ const QuestionCard = ({
   const [answerText, setAnswerText] = useState("");
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
+  const [translatedText, setTranslatedText] = useState(null);
+  const [isTranslating, setIsTranslating] = useState(false);
 
   useEffect(() => {
     if (isSimulatingAI) {
@@ -127,6 +130,29 @@ const QuestionCard = ({
     setIsExpanded(!isExpanded);
   };
 
+  const handleTranslate = async () => {
+    // If already translated, just toggle visibility
+    if (translatedText) {
+      setTranslated(!translated);
+      return;
+    }
+
+    // Start translation
+    setIsTranslating(true);
+    try {
+      const result = await translateText(data.questionOriginal);
+      setTranslatedText(result);
+      setTranslated(true);
+    } catch (error) {
+      console.error('Translation failed:', error);
+      if (onErrorToast) {
+        onErrorToast('Translation failed. Please try again.', 'error');
+      }
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
   return (
     <div 
       className={`relative p-6 rounded-3xl bg-slate-900/45 backdrop-blur-2xl border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] shadow-black/30 transition-all duration-500 hover:-translate-y-0.5 hover:shadow-[0_25px_70px_-40px_rgba(0,0,0,0.9)] hover:shadow-lg hover:shadow-black/40 hover:bg-slate-900/30 group overflow-hidden ${data.isNew ? 'animate-slide-in' : ''}`}
@@ -192,12 +218,20 @@ const QuestionCard = ({
             </div>
 
             {/* Translation Reveal */}
-            <div className={`overflow-hidden transition-all duration-500 ease-in-out ${translated ? 'max-h-32 opacity-100' : 'max-h-0 opacity-0'}`}>
+            <div className={`overflow-hidden transition-all duration-500 ease-in-out ${translated && translatedText ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}>
               <div className="flex gap-4 pl-4 border-l-2 border-cyan-500 bg-gradient-to-r from-cyan-900/10 to-transparent p-3 rounded-r-xl">
                 <Sparkles className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-1" />
-                <p className="text-base text-gray-300 font-normal leading-relaxed">
-                  {data.questionTranslated}
-                </p>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1">
+                      <Cpu className="w-3 h-3" />
+                      AI-Powered Translation
+                    </span>
+                  </div>
+                  <p className="text-base text-gray-300 font-normal leading-relaxed">
+                    {translatedText}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -226,16 +260,25 @@ const QuestionCard = ({
       {/* Actions */}
       <div className="flex items-center justify-between pt-5 border-t border-white/5 relative z-10">
         <button 
-          onClick={() => !isSimulatingAI && setTranslated(!translated)}
-          disabled={isSimulatingAI}
+          onClick={() => !isSimulatingAI && !isTranslating && handleTranslate()}
+          disabled={isSimulatingAI || isTranslating}
           className={`flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl transition-all hover:scale-[1.01] focus:outline-none focus:ring-2 focus:ring-cyan-400/40 ${
-            translated 
+            translated && translatedText
               ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-cyan-50 border border-cyan-400/40 shadow-[0_10px_30px_-20px_rgba(34,211,238,0.8)]' 
               : 'bg-slate-800/60 text-slate-300 hover:text-white hover:bg-slate-800 border border-cyan-400/30'
-          } ${isSimulatingAI ? 'opacity-50 cursor-not-allowed' : ''}`}
+          } ${(isSimulatingAI || isTranslating) ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          <Languages className="w-3.5 h-3.5" />
-          {translated ? 'Show Original' : 'AI Translate'}
+          {isTranslating ? (
+            <>
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              Translating...
+            </>
+          ) : (
+            <>
+              <Languages className="w-3.5 h-3.5" />
+              {translated && translatedText ? 'Show Original' : 'AI Translate'}
+            </>
+          )}
         </button>
 
         <div className="flex items-center gap-3">
