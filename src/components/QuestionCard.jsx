@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Zap, Loader2, Sparkles, Languages, MessageSquare, Mail, Github, Send, CheckCircle2, Heart, Cpu } from 'lucide-react';
+import { Zap, Loader2, Sparkles, Languages, MessageSquare, Mail, Github, Send, CheckCircle2, Heart, Cpu, Award } from 'lucide-react';
 import { translateText } from '../utils/translator';
 
 const QuestionCard = ({ 
   id, // HTML id for scrolling
   data, 
-  onSubmitAnswer, 
+  onSubmitAnswer,
+  onMarkBestAnswer, // Handler for marking best answer
   session, 
   onLoginGithub, 
   onLoginGoogle,
@@ -324,14 +325,42 @@ const QuestionCard = ({
             <div className="mb-6 space-y-4">
               <h5 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Top Answers</h5>
               {data.replies.map((reply) => (
-                <div key={reply.id} className="bg-slate-950/60 rounded-xl p-4 border border-white/5 flex gap-4">
+                <div 
+                  key={reply.id} 
+                  className={`rounded-xl p-4 flex gap-4 transition-all ${
+                    reply.isBestAnswer 
+                      ? 'bg-emerald-500/5 border-2 border-emerald-500 scale-[1.02] shadow-lg shadow-emerald-500/10' 
+                      : 'bg-slate-950/60 border border-white/5'
+                  }`}
+                >
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-slate-800 overflow-hidden border border-white/10">
                     <img src={reply.avatar} alt={reply.author} className="w-full h-full object-cover" />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-bold text-cyan-300">{reply.author}</span>
-                      <span className="text-[10px] text-slate-500">{reply.time}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-cyan-300">{reply.author}</span>
+                        {reply.isBestAnswer && (
+                          <span className="flex items-center gap-1 px-2 py-0.5 bg-emerald-500/20 text-emerald-400 rounded-full text-[10px] font-bold uppercase">
+                            <CheckCircle2 className="w-3 h-3" />
+                            Best Answer
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-slate-500">{reply.time}</span>
+                        {/* Mark as Best - only for question author */}
+                        {session?.user?.id === data.authorId && !reply.isBestAnswer && (
+                          <button
+                            onClick={() => onMarkBestAnswer(data.id, reply.id, reply.authorId)}
+                            className="flex items-center gap-1 px-2 py-1 text-[10px] text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors"
+                            title="Mark as Best Answer"
+                          >
+                            <Award className="w-3 h-3" />
+                            Best
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <p className="text-sm text-slate-300 leading-relaxed">{reply.text}</p>
                   </div>

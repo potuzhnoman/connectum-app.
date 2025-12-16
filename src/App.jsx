@@ -259,13 +259,18 @@ const App = () => {
           questionTranslated: null, // Translation loaded on-demand
           xp: q.xp_reward || 0,
           comments: q.replies ? q.replies.length : 0,
-          replies: q.replies ? q.replies.map(r => ({
-            id: r.id,
-            author: r.author_name,
-            text: r.text,
-            time: formatTimeAgo(r.created_at),
-            avatar: r.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${r.author_name}`
-          })) : [],
+          replies: q.replies ? q.replies
+            .map(r => ({
+              id: r.id,
+              authorId: r.author_id, // For XP bonus
+              author: r.author_name,
+              text: r.text,
+              time: formatTimeAgo(r.created_at),
+              avatar: r.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${r.author_name}`,
+              isBestAnswer: r.is_best_answer || false
+            }))
+            .sort((a, b) => b.isBestAnswer - a.isBestAnswer) // Best answer first
+            : [],
           isNew: false 
         };
       });
@@ -343,6 +348,7 @@ const App = () => {
       question_id: questionId,
       text: text,
       author_name: session.user.user_metadata.full_name || session.user.email,
+      author_id: session.user.id, // For XP bonus
       avatar: session.user.user_metadata.avatar_url
     };
 
@@ -356,6 +362,46 @@ const App = () => {
       }
     } catch (error) {
       showStatusToast(error.message || "Failed to post answer", 'error');
+    }
+  };
+
+  const handleMarkBestAnswer = async (questionId, replyId, replyAuthorId) => {
+    if (!session) return;
+    
+    try {
+      // 1. Reset all best answers for this question
+      await supabase
+        .from('replies')
+        .update({ is_best_answer: false })
+        .eq('question_id', questionId);
+      
+      // 2. Set new best answer
+      await supabase
+        .from('replies')
+        .update({ is_best_answer: true })
+        .eq('id', replyId);
+      
+      // 3. Add XP to answer author (if author_id exists)
+      if (replyAuthorId) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('xp')
+          .eq('id', replyAuthorId)
+          .single();
+        
+        if (profile) {
+          await supabase
+            .from('profiles')
+            .update({ xp: (profile.xp || 0) + 50 })
+            .eq('id', replyAuthorId);
+        }
+      }
+      
+      showStatusToast('Best answer marked! +50 XP awarded', 'success');
+      fetchQuestions(false);
+    } catch (error) {
+      console.error('Mark best answer error:', error);
+      showStatusToast('Failed to mark best answer', 'error');
     }
   };
 
@@ -582,6 +628,7 @@ const App = () => {
                           id={`question-${q.id}`}
                           data={q} 
                           onSubmitAnswer={handleSubmitAnswer}
+                          onMarkBestAnswer={handleMarkBestAnswer}
                           session={session}
                           onLoginGithub={handleLoginGithub}
                           onLoginGoogle={handleLoginGoogle}
