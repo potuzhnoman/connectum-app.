@@ -77,10 +77,12 @@ const App = () => {
   const [toastMessage, setToastMessage] = useState(null);
   const [statusToast, setStatusToast] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showNavbarSearch, setShowNavbarSearch] = useState(false);
   
   // Data State
   const [userXP, setUserXP] = useState(0); 
   const [questions, setQuestions] = useState([]);
+  const [filteredQuestions, setFilteredQuestions] = useState(null);
   
   // FIXED: Changed from selectedUserProfile object to ID string
   const [viewProfileId, setViewProfileId] = useState(null);
@@ -114,9 +116,18 @@ const App = () => {
     };
   }, []);
 
-  // Update active section on scroll
+  // Update active section on scroll & show navbar search
   useEffect(() => {
     const handleScroll = () => {
+      // Smart detection: show navbar search when hero search scrolls out of view
+      const heroSearch = document.querySelector('.hero-search');
+      if (heroSearch) {
+        const rect = heroSearch.getBoundingClientRect();
+        // Show navbar search when hero search goes above viewport
+        setShowNavbarSearch(rect.bottom < 0);
+      }
+      
+      // Existing logic for activeSection
       const questionsSection = document.getElementById('questions-section');
       if (questionsSection) {
         const rect = questionsSection.getBoundingClientRect();
@@ -381,6 +392,33 @@ const App = () => {
     setIsManifestoOpen(true);
   };
 
+  const handleSearch = (query) => {
+    if (!query.trim()) {
+      setFilteredQuestions(null); // Show all questions
+      return;
+    }
+    
+    const filtered = questions.filter(q => 
+      q.questionOriginal.toLowerCase().includes(query.toLowerCase()) ||
+      q.name.toLowerCase().includes(query.toLowerCase()) ||
+      q.category?.toLowerCase().includes(query.toLowerCase())
+    );
+    setFilteredQuestions(filtered);
+  };
+
+  const handleResultClick = (result) => {
+    // Scroll to the question card
+    const questionElement = document.getElementById(`question-${result.id}`);
+    if (questionElement) {
+      questionElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Add highlight effect
+      questionElement.classList.add('ring-2', 'ring-cyan-400', 'ring-offset-2', 'ring-offset-slate-950');
+      setTimeout(() => {
+        questionElement.classList.remove('ring-2', 'ring-cyan-400', 'ring-offset-2', 'ring-offset-slate-950');
+      }, 2000);
+    }
+  };
+
   // --- Render ---
 
   if (configError) {
@@ -433,12 +471,19 @@ const App = () => {
         onLoginGithub={handleLoginGithub}
         onLoginGoogle={handleLoginGoogle}
         onLogout={handleLogout}
+        supabase={supabase}
+        onSearch={handleSearch}
+        onResultClick={handleResultClick}
+        showSearch={showNavbarSearch}
       />
       
       <main>
         <StartScreen 
           onOpenModal={() => setIsModalOpen(true)} 
-          onLogin={handleLoginGithub} 
+          onLogin={handleLoginGithub}
+          supabase={supabase}
+          onSearch={handleSearch}
+          onResultClick={handleResultClick}
         />
         
         <section id="questions-section" className="py-24 px-6 relative z-10">
@@ -472,41 +517,82 @@ const App = () => {
               </div>
             ) : (
               <div className="space-y-6">
-                {questions.length === 0 ? (
-                  <div className="text-center py-10 text-slate-500 bg-slate-900/30 rounded-3xl border border-white/5 p-8 backdrop-blur-sm space-y-4">
-                     <p className="mb-2">No questions detected in the stream.</p>
-                     <div className="flex flex-col sm:flex-row justify-center gap-3">
+                {(() => {
+                  const displayQuestions = filteredQuestions ?? questions;
+                  
+                  if (displayQuestions.length === 0 && filteredQuestions !== null) {
+                    // Search returned no results
+                    return (
+                      <div className="text-center py-10 text-slate-500 bg-slate-900/30 rounded-3xl border border-white/5 p-8 backdrop-blur-sm space-y-4">
+                        <p className="mb-2">No questions match your search.</p>
                         <button 
-                          onClick={() => setIsModalOpen(true)} 
-                          className="px-5 py-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 text-white text-sm font-bold shadow-lg shadow-cyan-500/25"
+                          onClick={() => setFilteredQuestions(null)}
+                          className="px-5 py-3 rounded-xl border border-cyan-500/40 text-cyan-100 text-sm font-bold hover:bg-cyan-500/10 transition-colors"
                         >
-                          Ask Question
+                          Clear Search
                         </button>
-                        {!session && (
+                      </div>
+                    );
+                  }
+                  
+                  if (displayQuestions.length === 0) {
+                    // No questions at all
+                    return (
+                      <div className="text-center py-10 text-slate-500 bg-slate-900/30 rounded-3xl border border-white/5 p-8 backdrop-blur-sm space-y-4">
+                        <p className="mb-2">No questions detected in the stream.</p>
+                        <div className="flex flex-col sm:flex-row justify-center gap-3">
                           <button 
-                            onClick={handleLoginGithub} 
-                            className="px-5 py-3 rounded-xl border border-cyan-500/40 text-cyan-100 text-sm font-bold"
+                            onClick={() => setIsModalOpen(true)} 
+                            className="px-5 py-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 text-white text-sm font-bold shadow-lg shadow-cyan-500/25"
                           >
-                            Login
+                            Ask Question
                           </button>
-                        )}
-                     </div>
-                  </div>
-                ) : (
-                  questions.map(q => (
-                    <QuestionCard 
-                      key={q.id} 
-                      data={q} 
-                      onSubmitAnswer={handleSubmitAnswer}
-                      session={session}
-                      onLoginGithub={handleLoginGithub}
-                      onLoginGoogle={handleLoginGoogle}
-                      onUserClick={handleUserClick}
-                      supabase={supabase}
-                      onErrorToast={showStatusToast}
-                    />
-                  ))
-                )}
+                          {!session && (
+                            <button 
+                              onClick={handleLoginGithub} 
+                              className="px-5 py-3 rounded-xl border border-cyan-500/40 text-cyan-100 text-sm font-bold"
+                            >
+                              Login
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  }
+                  
+                  // Display filtered or all questions
+                  return (
+                    <>
+                      {filteredQuestions !== null && (
+                        <div className="mb-4 px-4 py-2 bg-cyan-500/10 border border-cyan-500/30 rounded-lg text-sm text-cyan-200 flex items-center justify-between">
+                          <span>
+                            Showing <strong>{displayQuestions.length}</strong> of <strong>{questions.length}</strong> questions
+                          </span>
+                          <button 
+                            onClick={() => setFilteredQuestions(null)}
+                            className="text-xs text-cyan-400 hover:text-cyan-300 underline"
+                          >
+                            Clear filter
+                          </button>
+                        </div>
+                      )}
+                      {displayQuestions.map(q => (
+                        <QuestionCard 
+                          key={q.id}
+                          id={`question-${q.id}`}
+                          data={q} 
+                          onSubmitAnswer={handleSubmitAnswer}
+                          session={session}
+                          onLoginGithub={handleLoginGithub}
+                          onLoginGoogle={handleLoginGoogle}
+                          onUserClick={handleUserClick}
+                          supabase={supabase}
+                          onErrorToast={showStatusToast}
+                        />
+                      ))}
+                    </>
+                  );
+                })()}
               </div>
             )}
             

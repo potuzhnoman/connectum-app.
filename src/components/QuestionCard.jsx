@@ -3,6 +3,7 @@ import { Zap, Loader2, Sparkles, Languages, MessageSquare, Mail, Github, Send, C
 import { translateText } from '../utils/translator';
 
 const QuestionCard = ({ 
+  id, // HTML id for scrolling
   data, 
   onSubmitAnswer, 
   session, 
@@ -155,6 +156,7 @@ const QuestionCard = ({
 
   return (
     <div 
+      id={id}
       className={`relative p-6 rounded-3xl bg-slate-900/45 backdrop-blur-2xl border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] shadow-black/30 transition-all duration-500 hover:-translate-y-0.5 hover:shadow-[0_25px_70px_-40px_rgba(0,0,0,0.9)] hover:shadow-lg hover:shadow-black/40 hover:bg-slate-900/30 group overflow-hidden ${data.isNew ? 'animate-slide-in' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}

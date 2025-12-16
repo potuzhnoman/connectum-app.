@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Cpu, Trophy, LogOut, Plus, Mail, Github, Menu, X } from 'lucide-react';
+import SearchBarCompact from './SearchBarCompact';
 
 const Navbar = ({ 
   onOpenModal, 
@@ -15,7 +16,11 @@ const Navbar = ({
   session, 
   onLoginGithub, 
   onLoginGoogle, 
-  onLogout 
+  onLogout,
+  supabase, // For search
+  onSearch, // For search
+  onResultClick, // For search
+  showSearch // Controls SearchBarCompact visibility
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -32,8 +37,8 @@ const Navbar = ({
         ? 'bg-slate-950/80 backdrop-blur-xl border-cyan-500/20 py-3 shadow-[0_0_20px_rgba(6,182,212,0.1)]' 
         : 'bg-transparent border-transparent py-5'
     }`}>
-      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-        <div className="flex items-center gap-2 group cursor-pointer" onClick={() => window.scrollTo(0,0)}>
+      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2 group cursor-pointer flex-shrink-0" onClick={() => window.scrollTo(0,0)}>
           <div className="relative flex items-center justify-center w-10 h-10 bg-cyan-500/10 rounded-xl border border-cyan-500/30 group-hover:border-cyan-400 transition-colors">
             <Cpu className="w-6 h-6 text-cyan-400 group-hover:animate-pulse" />
           </div>
@@ -42,8 +47,21 @@ const Navbar = ({
           </span>
         </div>
 
+        {/* Search Bar - Desktop Only, appears on scroll */}
+        <div className={`hidden md:flex flex-1 justify-center px-8 transition-all duration-300 ${
+          showSearch 
+            ? 'opacity-100 translate-y-0' 
+            : 'opacity-0 translate-y-2 pointer-events-none'
+        }`}>
+          <SearchBarCompact 
+            supabase={supabase}
+            onSearch={onSearch}
+            onResultClick={onResultClick}
+          />
+        </div>
+
         {/* Desktop Nav */}
-        <div className="hidden md:flex items-center gap-8">
+        <div className="hidden md:flex items-center gap-8 flex-shrink-0">
           <button
             onClick={() => {
               onExploreClick();

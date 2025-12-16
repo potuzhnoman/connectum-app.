@@ -1,5 +1,6 @@
 import React from 'react';
 import { Globe, ArrowRight, ShieldCheck, Activity } from 'lucide-react';
+import SearchBar from './SearchBar';
 
 // --- Sub-Component: Language Ticker ---
 const LanguageTicker = () => {
@@ -76,7 +77,7 @@ const SoftSphere = () => {
 };
 
 // --- Sub-Component: Hero Section ---
-const Hero = ({ onOpenModal, onLogin }) => {
+const Hero = ({ onOpenModal, onLogin, supabase, onSearch, onResultClick }) => {
   return (
     <section className="relative pt-32 pb-20 px-6 flex flex-col items-center justify-center overflow-hidden">
       
@@ -116,21 +117,16 @@ const Hero = ({ onOpenModal, onLogin }) => {
             </p>
           </div>
 
-          {/* CTA Group */}
-          <div className="flex flex-col sm:flex-row gap-5 animate-slide-in" style={{animationDelay: '0.2s'}}>
-            <button 
-              onClick={onOpenModal}
-              className="group relative px-8 py-5 bg-white text-slate-950 rounded-xl font-bold text-xl overflow-hidden transition-all hover:scale-105 shadow-[0_0_40px_-5px_rgba(6,182,212,0.4)] hover:shadow-[0_0_60px_-5px_rgba(6,182,212,0.6)]"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-cyan-300 via-white to-cyan-300 opacity-0 group-hover:opacity-50 transition-opacity duration-500 blur-lg" />
-              <span className="relative flex items-center gap-2">
-                Join the HiveMind <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
-              </span>
-            </button>
-            <button className="px-8 py-5 bg-white/5 border border-white/20 text-white rounded-xl font-bold text-xl backdrop-blur-sm hover:bg-white/10 hover:border-white/40 transition-all flex items-center justify-center gap-2">
-               <ShieldCheck className="w-6 h-6 text-slate-300" />
-               View Protocol
-            </button>
+          {/* Search Bar */}
+          <div className="hero-search animate-slide-in" style={{animationDelay: '0.2s'}}>
+            <SearchBar 
+              supabase={supabase}
+              onSearch={onSearch}
+              onResultClick={onResultClick}
+            />
+            <p className="text-center text-sm text-slate-500 mt-3">
+              Search across <strong className="text-cyan-400">12k+</strong> questions in <strong className="text-cyan-400">40+</strong> languages
+            </p>
           </div>
 
           {/* Social Proof */}
@@ -160,7 +156,7 @@ const Hero = ({ onOpenModal, onLogin }) => {
 };
 
 // --- Main Export: StartScreen ---
-const StartScreen = ({ onOpenModal, onLogin }) => {
+const StartScreen = ({ onOpenModal, onLogin, supabase, onSearch, onResultClick }) => {
   return (
     <>
       <style>{`
@@ -218,7 +214,13 @@ const StartScreen = ({ onOpenModal, onLogin }) => {
         }
       `}</style>
       
-      <Hero onOpenModal={onOpenModal} onLogin={onLogin} />
+      <Hero 
+        onOpenModal={onOpenModal} 
+        onLogin={onLogin}
+        supabase={supabase}
+        onSearch={onSearch}
+        onResultClick={onResultClick}
+      />
       <LanguageTicker />
     </>
   );
