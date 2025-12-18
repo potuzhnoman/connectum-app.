@@ -89,6 +89,8 @@ const App = () => {
 
   // Track timeout ID to prevent premature clearing
   const toastTimeoutRef = useRef(null);
+  // Track optimistic updates to prevent realtime subscription from overwriting them
+  const optimisticUpdateRef = useRef(null);
 
   // Derived Stats
   const userLevel = Math.floor(userXP / 1000) + 1;
@@ -235,6 +237,11 @@ const App = () => {
 
   const fetchQuestions = async (showLoading = true) => {
     try {
+      // Skip fetch if there's a recent optimistic update (wait for it to complete)
+      if (optimisticUpdateRef.current && Date.now() - optimisticUpdateRef.current < 2000) {
+        return;
+      }
+      
       if (showLoading) setLoading(true);
       const { data, error } = await supabase
         .from('questions')
@@ -368,6 +375,9 @@ const App = () => {
   const handleMarkBestAnswer = async (questionId, replyId, replyAuthorId) => {
     if (!session) return;
     
+    // Mark that we're doing an optimistic update
+    optimisticUpdateRef.current = Date.now();
+    
     // Optimistic update: update UI immediately
     setQuestions(prevQuestions => {
       return prevQuestions.map(question => {
@@ -422,12 +432,17 @@ const App = () => {
       }
       
       showStatusToast('Best answer marked! +50 XP awarded', 'success');
-      // Sync with database (but UI already updated optimistically)
-      await fetchQuestions(false);
+      
+      // Wait a bit for DB to update, then allow realtime subscription to sync
+      setTimeout(() => {
+        optimisticUpdateRef.current = null;
+        fetchQuestions(false);
+      }, 1000);
     } catch (error) {
       console.error('Mark best answer error:', error);
       showStatusToast('Failed to mark best answer', 'error');
       // Revert optimistic update on error
+      optimisticUpdateRef.current = null;
       await fetchQuestions(false);
     }
   };
