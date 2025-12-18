@@ -368,6 +368,26 @@ const App = () => {
   const handleMarkBestAnswer = async (questionId, replyId, replyAuthorId) => {
     if (!session) return;
     
+    // Optimistic update: update UI immediately
+    setQuestions(prevQuestions => {
+      return prevQuestions.map(question => {
+        if (question.id === questionId) {
+          // Update all replies: set isBestAnswer to false for all, then true for selected
+          const updatedReplies = question.replies.map(reply => ({
+            ...reply,
+            isBestAnswer: reply.id === replyId
+          }));
+          // Sort to put best answer first
+          updatedReplies.sort((a, b) => b.isBestAnswer - a.isBestAnswer);
+          return {
+            ...question,
+            replies: updatedReplies
+          };
+        }
+        return question;
+      });
+    });
+    
     try {
       // 1. Reset all best answers for this question
       const { error: resetError } = await supabase
@@ -402,10 +422,13 @@ const App = () => {
       }
       
       showStatusToast('Best answer marked! +50 XP awarded', 'success');
+      // Sync with database (but UI already updated optimistically)
       await fetchQuestions(false);
     } catch (error) {
       console.error('Mark best answer error:', error);
       showStatusToast('Failed to mark best answer', 'error');
+      // Revert optimistic update on error
+      await fetchQuestions(false);
     }
   };
 
