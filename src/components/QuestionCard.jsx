@@ -350,7 +350,12 @@ const QuestionCard = ({
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] text-slate-500">{reply.time}</span>
                         {/* Mark as Best - only for question author */}
-                        {session?.user?.id === data.authorId && !reply.isBestAnswer && (
+                        {(() => {
+                          // Use string conversion to handle type mismatches (string vs UUID)
+                          const sessionUserId = session?.user?.id ? String(session.user.id) : null;
+                          const dataAuthorId = data.authorId ? String(data.authorId) : null;
+                          return sessionUserId === dataAuthorId && sessionUserId !== null && !reply.isBestAnswer;
+                        })() && (
                           <button
                             onClick={() => onMarkBestAnswer(data.id, reply.id, reply.authorId)}
                             className="flex items-center gap-1 px-2 py-1 text-[10px] text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors"

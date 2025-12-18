@@ -370,16 +370,20 @@ const App = () => {
     
     try {
       // 1. Reset all best answers for this question
-      await supabase
+      const { error: resetError } = await supabase
         .from('replies')
         .update({ is_best_answer: false })
         .eq('question_id', questionId);
       
+      if (resetError) throw resetError;
+      
       // 2. Set new best answer
-      await supabase
+      const { error: updateError } = await supabase
         .from('replies')
         .update({ is_best_answer: true })
         .eq('id', replyId);
+      
+      if (updateError) throw updateError;
       
       // 3. Add XP to answer author (if author_id exists)
       if (replyAuthorId) {
@@ -398,7 +402,7 @@ const App = () => {
       }
       
       showStatusToast('Best answer marked! +50 XP awarded', 'success');
-      fetchQuestions(false);
+      await fetchQuestions(false);
     } catch (error) {
       console.error('Mark best answer error:', error);
       showStatusToast('Failed to mark best answer', 'error');

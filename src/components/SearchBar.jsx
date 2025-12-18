@@ -286,3 +286,9 @@ const SearchBar = ({ supabase, onSearch, onResultClick }) => {
 };
 
 export default SearchBar;
+
+
+
+
+
+

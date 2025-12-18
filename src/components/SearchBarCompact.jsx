@@ -259,3 +259,9 @@ const SearchBarCompact = ({ supabase, onSearch, onResultClick }) => {
 };
 
 export default SearchBarCompact;
+
+
+
+
+
+
