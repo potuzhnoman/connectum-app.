@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { 
-  Cpu, Plus, Loader2, ArrowRight, AlertTriangle 
+import {
+  Cpu, Plus, Loader2, ArrowRight, AlertTriangle
 } from 'lucide-react';
 
 // --- Component Imports ---
@@ -13,6 +13,10 @@ import LeaderboardModal from './components/LeaderboardModal';
 import UserProfileModal from './components/UserProfileModal';
 import ManifestoModal from './components/ManifestoModal';
 import XPToast from './components/XPToast';
+import AchievementToast from './components/AchievementToast';
+
+// --- Utilities ---
+import { useAchievements } from './utils/useAchievements';
 
 // --- Supabase Configuration ---
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -78,12 +82,12 @@ const App = () => {
   const [statusToast, setStatusToast] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showNavbarSearch, setShowNavbarSearch] = useState(false);
-  
+
   // Data State
-  const [userXP, setUserXP] = useState(0); 
+  const [userXP, setUserXP] = useState(0);
   const [questions, setQuestions] = useState([]);
   const [filteredQuestions, setFilteredQuestions] = useState(null);
-  
+
   // FIXED: Changed from selectedUserProfile object to ID string
   const [viewProfileId, setViewProfileId] = useState(null);
 
@@ -91,6 +95,9 @@ const App = () => {
   const toastTimeoutRef = useRef(null);
   // Track optimistic updates to prevent realtime subscription from overwriting them
   const optimisticUpdateRef = useRef(null);
+
+  // Achievement tracking
+  const { newAchievement, checkAchievements } = useAchievements(supabase, session);
 
   // Derived Stats
   const userLevel = Math.floor(userXP / 1000) + 1;
@@ -101,7 +108,7 @@ const App = () => {
     if (toastTimeoutRef.current) {
       clearTimeout(toastTimeoutRef.current);
     }
-    
+
     setStatusToast({ message, type });
     toastTimeoutRef.current = setTimeout(() => {
       setStatusToast(null);
@@ -128,7 +135,7 @@ const App = () => {
         // Show navbar search when hero search goes above viewport
         setShowNavbarSearch(rect.bottom < 0);
       }
-      
+
       // Existing logic for activeSection
       const questionsSection = document.getElementById('questions-section');
       if (questionsSection) {
@@ -148,7 +155,7 @@ const App = () => {
   // --- 1. Configuration Check ---
   useEffect(() => {
     if (!supabaseUrl || supabaseUrl.includes("INSERT_YOUR_SUPABASE_URL")) {
-       setConfigError("Configuration Required");
+      setConfigError("Configuration Required");
     }
   }, []);
 
@@ -241,7 +248,7 @@ const App = () => {
       if (optimisticUpdateRef.current && Date.now() - optimisticUpdateRef.current < 2000) {
         return;
       }
-      
+
       if (showLoading) setLoading(true);
       const { data, error } = await supabase
         .from('questions')
@@ -278,7 +285,7 @@ const App = () => {
             }))
             .sort((a, b) => b.isBestAnswer - a.isBestAnswer) // Best answer first
             : [],
-          isNew: false 
+          isNew: false
         };
       });
       setQuestions(formattedQuestions);
@@ -327,7 +334,7 @@ const App = () => {
     const newQuestionPayload = {
       text: formData.title,
       language: formData.language,
-      category: formData.category, 
+      category: formData.category,
       author_name: session.user.user_metadata.full_name || session.user.email,
       author_id: session.user.id,
       // FIXED: Removed author_avatar to prevent DB error
@@ -342,6 +349,8 @@ const App = () => {
         handleAddXP(50, "Posted Question");
         setIsModalOpen(false);
         showStatusToast("Question posted", 'success');
+        // Check for achievements
+        checkAchievements();
       }
     } catch (error) {
       showStatusToast(error.message || "Failed to post question", 'error');
@@ -366,6 +375,8 @@ const App = () => {
       if (data) {
         handleAddXP(100, "Solution Provided");
         showStatusToast("Answer posted", 'success');
+        // Check for achievements
+        checkAchievements();
       }
     } catch (error) {
       showStatusToast(error.message || "Failed to post answer", 'error');
@@ -374,10 +385,10 @@ const App = () => {
 
   const handleMarkBestAnswer = async (questionId, replyId, replyAuthorId) => {
     if (!session) return;
-    
+
     // Mark that we're doing an optimistic update
     optimisticUpdateRef.current = Date.now();
-    
+
     // Optimistic update: update UI immediately
     setQuestions(prevQuestions => {
       return prevQuestions.map(question => {
@@ -397,24 +408,24 @@ const App = () => {
         return question;
       });
     });
-    
+
     try {
       // 1. Reset all best answers for this question
       const { error: resetError } = await supabase
         .from('replies')
         .update({ is_best_answer: false })
         .eq('question_id', questionId);
-      
+
       if (resetError) throw resetError;
-      
+
       // 2. Set new best answer
       const { error: updateError } = await supabase
         .from('replies')
         .update({ is_best_answer: true })
         .eq('id', replyId);
-      
+
       if (updateError) throw updateError;
-      
+
       // 3. Add XP to answer author (if author_id exists)
       if (replyAuthorId) {
         const { data: profile } = await supabase
@@ -422,7 +433,7 @@ const App = () => {
           .select('xp')
           .eq('id', replyAuthorId)
           .single();
-        
+
         if (profile) {
           await supabase
             .from('profiles')
@@ -430,9 +441,12 @@ const App = () => {
             .eq('id', replyAuthorId);
         }
       }
-      
+
       showStatusToast('Best answer marked! +50 XP awarded', 'success');
-      
+
+      // Check for achievements
+      checkAchievements();
+
       // Wait a bit for DB to update, then allow realtime subscription to sync
       setTimeout(() => {
         optimisticUpdateRef.current = null;
@@ -485,8 +499,8 @@ const App = () => {
       setFilteredQuestions(null); // Show all questions
       return;
     }
-    
-    const filtered = questions.filter(q => 
+
+    const filtered = questions.filter(q =>
       q.questionOriginal.toLowerCase().includes(query.toLowerCase()) ||
       q.name.toLowerCase().includes(query.toLowerCase()) ||
       q.category?.toLowerCase().includes(query.toLowerCase())
@@ -511,17 +525,17 @@ const App = () => {
 
   if (configError) {
     return (
-        <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 text-center">
-            <div className="bg-red-500/10 border border-red-500/20 p-8 rounded-2xl max-w-lg shadow-[0_0_40px_rgba(239,68,68,0.1)]">
-                <div className="mx-auto w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center mb-4">
-                    <AlertTriangle className="w-6 h-6 text-red-400" />
-                </div>
-                <h2 className="text-xl font-bold text-red-400 mb-4">Configuration Required</h2>
-                <p className="text-slate-300 mb-6 text-sm leading-relaxed">
-                    Supabase configuration is missing. Please check your environment variables.
-                </p>
-            </div>
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 text-center">
+        <div className="bg-red-500/10 border border-red-500/20 p-8 rounded-2xl max-w-lg shadow-[0_0_40px_rgba(239,68,68,0.1)]">
+          <div className="mx-auto w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center mb-4">
+            <AlertTriangle className="w-6 h-6 text-red-400" />
+          </div>
+          <h2 className="text-xl font-bold text-red-400 mb-4">Configuration Required</h2>
+          <p className="text-slate-300 mb-6 text-sm leading-relaxed">
+            Supabase configuration is missing. Please check your environment variables.
+          </p>
         </div>
+      </div>
     );
   }
 
@@ -544,17 +558,17 @@ const App = () => {
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
       `}</style>
 
-      <Navbar 
-        onOpenModal={() => setIsModalOpen(true)} 
-        onOpenLeaderboard={() => setIsLeaderboardOpen(true)} 
+      <Navbar
+        onOpenModal={() => setIsModalOpen(true)}
+        onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
         onOpenProfile={handleOpenMyProfile}
         onExploreClick={handleExploreClick}
         onManifestoClick={handleManifestoClick}
         activeSection={activeSection}
         setActiveSection={setActiveSection}
-        xp={userXP} 
-        level={userLevel} 
-        xpProgress={levelProgress} 
+        xp={userXP}
+        level={userLevel}
+        xpProgress={levelProgress}
         session={session}
         onLoginGithub={handleLoginGithub}
         onLoginGoogle={handleLoginGoogle}
@@ -564,16 +578,16 @@ const App = () => {
         onResultClick={handleResultClick}
         showSearch={showNavbarSearch}
       />
-      
+
       <main>
-        <StartScreen 
-          onOpenModal={() => setIsModalOpen(true)} 
+        <StartScreen
+          onOpenModal={() => setIsModalOpen(true)}
           onLogin={handleLoginGithub}
           supabase={supabase}
           onSearch={handleSearch}
           onResultClick={handleResultClick}
         />
-        
+
         <section id="questions-section" className="py-24 px-6 relative z-10">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-5xl h-full bg-cyan-900/10 blur-[100px] -z-10 rounded-full mix-blend-screen" />
           <div className="max-w-3xl mx-auto">
@@ -584,7 +598,7 @@ const App = () => {
 
             {loading ? (
               <div className="space-y-4">
-                {[1,2,3].map((i) => (
+                {[1, 2, 3].map((i) => (
                   <div key={i} className="p-6 rounded-3xl bg-slate-900/40 border border-white/5 animate-pulse space-y-4">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-full bg-slate-800" />
@@ -607,13 +621,13 @@ const App = () => {
               <div className="space-y-6">
                 {(() => {
                   const displayQuestions = filteredQuestions ?? questions;
-                  
+
                   if (displayQuestions.length === 0 && filteredQuestions !== null) {
                     // Search returned no results
                     return (
                       <div className="text-center py-10 text-slate-500 bg-slate-900/30 rounded-3xl border border-white/5 p-8 backdrop-blur-sm space-y-4">
                         <p className="mb-2">No questions match your search.</p>
-                        <button 
+                        <button
                           onClick={() => setFilteredQuestions(null)}
                           className="px-5 py-3 rounded-xl border border-cyan-500/40 text-cyan-100 text-sm font-bold hover:bg-cyan-500/10 transition-colors"
                         >
@@ -622,22 +636,22 @@ const App = () => {
                       </div>
                     );
                   }
-                  
+
                   if (displayQuestions.length === 0) {
                     // No questions at all
                     return (
                       <div className="text-center py-10 text-slate-500 bg-slate-900/30 rounded-3xl border border-white/5 p-8 backdrop-blur-sm space-y-4">
                         <p className="mb-2">No questions detected in the stream.</p>
                         <div className="flex flex-col sm:flex-row justify-center gap-3">
-                          <button 
-                            onClick={() => setIsModalOpen(true)} 
+                          <button
+                            onClick={() => setIsModalOpen(true)}
                             className="px-5 py-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 text-white text-sm font-bold shadow-lg shadow-cyan-500/25"
                           >
                             Ask Question
                           </button>
                           {!session && (
-                            <button 
-                              onClick={handleLoginGithub} 
+                            <button
+                              onClick={handleLoginGithub}
                               className="px-5 py-3 rounded-xl border border-cyan-500/40 text-cyan-100 text-sm font-bold"
                             >
                               Login
@@ -647,7 +661,7 @@ const App = () => {
                       </div>
                     );
                   }
-                  
+
                   // Display filtered or all questions
                   return (
                     <>
@@ -656,7 +670,7 @@ const App = () => {
                           <span>
                             Showing <strong>{displayQuestions.length}</strong> of <strong>{questions.length}</strong> questions
                           </span>
-                          <button 
+                          <button
                             onClick={() => setFilteredQuestions(null)}
                             className="text-xs text-cyan-400 hover:text-cyan-300 underline"
                           >
@@ -665,10 +679,10 @@ const App = () => {
                         </div>
                       )}
                       {displayQuestions.map(q => (
-                        <QuestionCard 
+                        <QuestionCard
                           key={q.id}
                           id={`question-${q.id}`}
-                          data={q} 
+                          data={q}
                           onSubmitAnswer={handleSubmitAnswer}
                           onMarkBestAnswer={handleMarkBestAnswer}
                           session={session}
@@ -684,9 +698,9 @@ const App = () => {
                 })()}
               </div>
             )}
-            
+
             <div className="mt-12 text-center">
-              <button 
+              <button
                 className="text-sm font-bold text-slate-500 hover:text-cyan-400 transition-colors flex items-center justify-center gap-2 mx-auto"
                 onClick={() => {
                   if (typeof window !== 'undefined') {
@@ -705,13 +719,13 @@ const App = () => {
       <footer className="border-t border-slate-800 bg-slate-900 py-12 px-6">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-2">
-             <Cpu className="w-5 h-5 text-cyan-500" />
-             <span className="text-base font-bold text-slate-400">Connectum.</span>
+            <Cpu className="w-5 h-5 text-cyan-500" />
+            <span className="text-base font-bold text-slate-400">Connectum.</span>
           </div>
           <div className="flex gap-8 text-sm text-slate-500">
-             <a href="#" className="hover:text-white transition-colors">Privacy</a>
-             <a href="#" className="hover:text-white transition-colors">Terms</a>
-             <a href="#" className="hover:text-white transition-colors">Contact</a>
+            <a href="#" className="hover:text-white transition-colors">Privacy</a>
+            <a href="#" className="hover:text-white transition-colors">Terms</a>
+            <a href="#" className="hover:text-white transition-colors">Contact</a>
           </div>
           <div className="text-sm text-slate-600">
             © 2024 Connectum Network.
@@ -720,23 +734,27 @@ const App = () => {
       </footer>
 
       {/* --- Modals & Toasts --- */}
-      
-      <XPToast 
-        message={toastMessage} 
-        isVisible={!!toastMessage} 
+
+      <XPToast
+        message={toastMessage}
+        isVisible={!!toastMessage}
       />
       <StatusToast toast={statusToast} />
+      <AchievementToast
+        achievement={newAchievement}
+        isVisible={!!newAchievement}
+      />
 
-      <AskQuestionModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        onSubmit={handleAddQuestion} 
+      <AskQuestionModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleAddQuestion}
         session={session}
         onLoginGithub={handleLoginGithub}
         onLoginGoogle={handleLoginGoogle}
       />
-      
-      <LeaderboardModal 
+
+      <LeaderboardModal
         isOpen={isLeaderboardOpen}
         onClose={() => {
           setIsLeaderboardOpen(false);
@@ -746,14 +764,14 @@ const App = () => {
       />
 
       {/* FIXED: Passing userId and supabase client instead of user object */}
-      <UserProfileModal 
+      <UserProfileModal
         isOpen={isProfileOpen}
         onClose={() => setIsProfileOpen(false)}
         userId={viewProfileId}
         supabase={supabase}
       />
 
-      <ManifestoModal 
+      <ManifestoModal
         isOpen={isManifestoOpen}
         onClose={() => {
           setIsManifestoOpen(false);
