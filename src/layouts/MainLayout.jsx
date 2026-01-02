@@ -1,17 +1,32 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import { Cpu } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const MainLayout = ({ children, activeSection, setActiveSection, setIsModalOpen, setIsLeaderboardOpen, setIsProfileOpen, setIsManifestoOpen, onSearch }) => {
-    const { session, loginWithGithub, loginWithGoogle, logout, xp } = useAuth();
+    const { session, loginWithGithub, loginWithGoogle, logout } = useAuth();
+    const [showSearch, setShowSearch] = useState(false);
 
-    // XP and Level calculation should ideally be in a Context or Hook too, 
-    // but for now we might pass it down or refactor later.
-    // For this step, we will assume Navbar can handle some of this or we pass basics.
+    useEffect(() => {
+        const handleScroll = () => {
+            // Smart detection: show navbar search when hero search scrolls out of view
+            // We look for an element with class 'hero-search' (rendered in StartScreen)
+            const heroSearch = document.querySelector('.hero-search');
+            if (heroSearch) {
+                const rect = heroSearch.getBoundingClientRect();
+                setShowSearch(rect.bottom < 0);
+            } else {
+                // Fallback if no hero search (e.g. inner pages), always show or hide based on scroll or page type
+                // For now, let's show it if we scrolled past 300px
+                setShowSearch(window.scrollY > 300);
+            }
+        };
 
-    // Note: We need to bridge the old Navbar props with the new Context.
-    // The original App.jsx passed a lot of props. We will try to simplify.
+        window.addEventListener('scroll', handleScroll);
+        // Initial check
+        handleScroll();
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-indigo-500/30 selection:text-white">
@@ -23,16 +38,16 @@ const MainLayout = ({ children, activeSection, setActiveSection, setIsModalOpen,
                 onManifestoClick={() => setIsManifestoOpen(true)}
                 activeSection={activeSection}
                 setActiveSection={setActiveSection}
-                xp={0} // TODO: Connect to UserContext
-                level={1} // TODO: Connect to UserContext
-                xpProgress={0} // TODO: Connect to UserContext
+                xp={0}
+                level={1}
+                xpProgress={0}
                 session={session}
                 onLoginGithub={loginWithGithub}
                 onLoginGoogle={loginWithGoogle}
                 onLogout={logout}
-                supabase={null} // Navbar uses supabase directly? Warning: Refactor needed.
-                onSearch={onSearch}
-                showSearch={false} // TODO: Logic for this
+                supabase={null}
+                onSearch={onSearch} // Pass the global search handler
+                showSearch={showSearch} // Dynamic visibility
             />
 
             <main>

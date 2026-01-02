@@ -56,8 +56,8 @@ const Navbar = ({
       <div className={`max-w-7xl mx-auto px-4 sm:px-6`}>
         <div
           className={`relative rounded-2xl transition-all duration-300 ${isScrolled
-              ? 'glass-panel px-6 py-3'
-              : 'bg-transparent px-2 py-2'
+            ? 'glass-panel px-6 py-3'
+            : 'bg-transparent px-2 py-2'
             }`}
         >
           <div className="flex items-center justify-between">
@@ -154,19 +154,22 @@ const Navbar = ({
                     <span className="text-xl leading-none">+</span>
                     <span>Ask</span>
                   </button>
-
-                  {/* Profile Dropdown Trigger */}
-                  <button
-                    onClick={onOpenProfile}
-                    className="relative group p-0.5 rounded-full border border-white/10 hover:border-cyan-500/50 transition-colors"
-                  >
-                    <img
-                      src={session.user.user_metadata.avatar_url}
-                      alt="Profile"
-                      className="w-9 h-9 rounded-full object-cover bg-slate-800"
-                    />
-                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-slate-950 rounded-full" />
-                  </button>
+                  {/* Profile */}
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="relative group cursor-pointer"
+                      onClick={() => onOpenProfile()} // Changed to arrow function
+                    >
+                      <div className="w-10 h-10 rounded-full bg-slate-900 p-0.5 ring-2 ring-cyan-500/30 group-hover:ring-cyan-400 transition-all overflow-hidden">
+                        <img
+                          src={session.user.user_metadata.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`}
+                          alt="User"
+                          className="w-full h-full rounded-full object-cover bg-slate-950"
+                        />
+                      </div>
+                      <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-slate-950 rounded-full" />
+                    </div>
+                  </div>
                 </>
               ) : (
                 <button

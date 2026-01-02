@@ -51,7 +51,13 @@ const AppInner = () => {
     openAskModal: () => setIsModalOpen(true),
     openLeaderboard: () => setIsLeaderboardOpen(true),
     openProfile: (userId) => {
-      if (userId) setViewProfileId(userId); else setViewProfileId(session?.user?.id);
+      // If userId is passed (and is string), use it. Otherwise use session ID.
+      // We must be careful not to treat Event objects as IDs if they sneak in.
+      if (typeof userId === 'string') {
+        setViewProfileId(userId);
+      } else {
+        setViewProfileId(session?.user?.id);
+      }
       setIsProfileOpen(true);
     },
     openManifesto: () => setIsManifestoOpen(true),
@@ -111,6 +117,7 @@ const AppInner = () => {
               category: data.category,
               author_name: session?.user?.user_metadata.full_name || session?.user?.email,
               author_id: session?.user?.id,
+              author_avatar: session?.user?.user_metadata.avatar_url,
               xp_reward: 50
             });
             setIsModalOpen(false);
