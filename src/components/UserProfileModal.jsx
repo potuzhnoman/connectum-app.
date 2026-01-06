@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Loader2, Activity, Calendar, MapPin, Mail, Github, Crown, Zap } from 'lucide-react';
+import { X, Loader2, Activity } from 'lucide-react';
 
 const UserProfileModal = ({ isOpen, onClose, userId, supabase }) => {
   const [profile, setProfile] = useState(null);
@@ -11,12 +11,28 @@ const UserProfileModal = ({ isOpen, onClose, userId, supabase }) => {
       const fetchUserData = async () => {
         setLoading(true);
         try {
-          // 1. Скачиваем профиль
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', userId)
-            .single();
+          // 1. Скачиваем профиль из auth metadata или создаем mock
+          let profileData = null;
+
+          // Try to get user from auth
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user && user.id === userId) {
+            profileData = {
+              id: user.id,
+              full_name: user.user_metadata?.full_name || user.email,
+              avatar_url: user.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`,
+              xp: 1500 // Mock XP for now
+            };
+          } else {
+            // Mock profile for other users
+            profileData = {
+              id: userId,
+              full_name: 'Anonymous User',
+              avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${userId}`,
+              xp: 1000 // Mock XP
+            };
+          }
+
           setProfile(profileData);
 
           // 2. Скачиваем историю вопросов
@@ -28,7 +44,10 @@ const UserProfileModal = ({ isOpen, onClose, userId, supabase }) => {
             .limit(5);
           setHistory(historyData || []);
         } catch (err) {
-          console.error(err);
+          console.error("Error fetching user data:", err);
+          // Set empty data on error
+          setProfile(null);
+          setHistory([]);
         } finally {
           setLoading(false);
         }

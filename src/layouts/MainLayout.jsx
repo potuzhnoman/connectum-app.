@@ -4,7 +4,7 @@ import { Cpu } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const MainLayout = ({ children, activeSection, setActiveSection, setIsModalOpen, setIsLeaderboardOpen, setIsProfileOpen, setIsManifestoOpen, onSearch }) => {
-    const { session, loginWithGithub, loginWithGoogle, logout, xp } = useAuth();
+    const { session, loginWithGithub, loginWithGoogle, logout, userXP, userLevel, xpProgress } = useAuth();
 
     // XP and Level calculation should ideally be in a Context or Hook too, 
     // but for now we might pass it down or refactor later.
@@ -23,9 +23,9 @@ const MainLayout = ({ children, activeSection, setActiveSection, setIsModalOpen,
                 onManifestoClick={() => setIsManifestoOpen(true)}
                 activeSection={activeSection}
                 setActiveSection={setActiveSection}
-                xp={0} // TODO: Connect to UserContext
-                level={1} // TODO: Connect to UserContext
-                xpProgress={0} // TODO: Connect to UserContext
+                xp={userXP}
+                level={userLevel}
+                xpProgress={xpProgress / 100}
                 session={session}
                 onLoginGithub={loginWithGithub}
                 onLoginGoogle={loginWithGoogle}

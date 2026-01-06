@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Loader2, ArrowRight } from 'lucide-react';
 import { supabase } from '../services/supabase'; // Singleton
-import { fetchQuestionsService, addReplyService } from '../services/questions'; // Service
+import { fetchQuestionsService, addReplyService, markBestAnswerService } from '../services/questions'; // Service
 import StartScreen from '../components/StartScreen';
 import QuestionCard from '../components/QuestionCard';
 
 const Home = () => {
-    const { openAskModal, openProfile, showStatusToast, session, loginWithGithub, loginWithGoogle } = useOutletContext();
+    const { openAskModal, openProfile, showStatusToast, session, loginWithGithub, loginWithGoogle, awardXP } = useOutletContext();
 
     const [questions, setQuestions] = useState([]);
     const [filteredQuestions, setFilteredQuestions] = useState(null);
@@ -90,8 +90,11 @@ const Home = () => {
 
         try {
             await addReplyService(replyPayload);
-            // XP handling should be done via trigger or service, but for now we keep UI optimistic updates in subscription
             showStatusToast("Answer posted", 'success');
+
+            // Award XP for posting answer
+            await awardXP(10, 'Posted answer');
+
             // Note: Subscription will reload data
         } catch (error) {
             showStatusToast(error.message || "Failed to post answer", 'error');
@@ -102,10 +105,17 @@ const Home = () => {
     // We need to implement it here or in service. 
     // For brevity, I'll stub it or copy logic if space permits.
     const handleMarkBestAnswer = async (questionId, replyId, replyAuthorId) => {
-        // ... logic similar to App.jsx, but utilizing service calls ideally.
-        // For now, let's keep it simple or import from a service helper if created.
-        // Implementing barebones for now to fix compile.
-        console.log("Mark Best Answer logic to be refactored");
+        if (!session) return alert("Please login first.");
+
+        try {
+            await markBestAnswerService(replyId);
+            showStatusToast("Best answer selected!", 'success');
+
+            // Award XP to the answer author
+            await awardXP(25, 'Answer marked as best');
+        } catch (error) {
+            showStatusToast(error.message || "Failed to mark best answer", 'error');
+        }
     };
 
     return (

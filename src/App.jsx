@@ -28,7 +28,7 @@ const StatusToast = ({ toast }) => {
 };
 
 const AppInner = () => {
-  const { session, loginWithGithub, loginWithGoogle } = useAuth();
+  const { session, loginWithGithub, loginWithGoogle, awardXP } = useAuth();
 
   // UI State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -107,6 +107,7 @@ const AppInner = () => {
           try {
             await addQuestionService({
               text: data.title,
+              description: data.details || '', // Add details/context field
               language: data.language,
               category: data.category,
               author_name: session?.user?.user_metadata.full_name || session?.user?.email,
@@ -115,6 +116,9 @@ const AppInner = () => {
             });
             setIsModalOpen(false);
             showStatusToast("Question posted", 'success');
+
+            // Award XP for posting question
+            await awardXP(50, 'Posted question');
             setToastMessage("+50 XP - Posted Question");
             setTimeout(() => setToastMessage(null), 3000);
           } catch (e) {

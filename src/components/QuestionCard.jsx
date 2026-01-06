@@ -1,9 +1,5 @@
 import React, { useState } from 'react';
-import {
-  MessageCircle, Share2, MoreHorizontal,
-  CornerDownRight, CheckCircle, Award,
-  Languages, Sparkles, Flag
-} from 'lucide-react';
+import { MessageCircle, Share2, MoreHorizontal, CornerDownRight, CheckCircle, Award, Languages } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const QuestionCard = ({
@@ -37,13 +33,11 @@ const QuestionCard = ({
 
     setIsTranslating(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/translate`, { // Edge function URL? 
-        // Wait, the user had /api/translate.js and likely a Vercel-like setup.
-        // We should stick to the pattern they had or assume it works.
-        // The original code used /api/translate.
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/translate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify({
           text: data.questionOriginal,

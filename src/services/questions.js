@@ -119,3 +119,29 @@ export const addReplyService = async (replyData) => {
     if (error) throw error;
     return data;
 };
+
+export const markBestAnswerService = async (replyId) => {
+    // First, unmark any existing best answer for this question
+    const { data: replyData } = await supabase
+        .from('replies')
+        .select('question_id')
+        .eq('id', replyId)
+        .single();
+
+    if (replyData) {
+        await supabase
+            .from('replies')
+            .update({ is_best_answer: false })
+            .eq('question_id', replyData.question_id);
+    }
+
+    // Then mark the selected reply as best
+    const { data, error } = await supabase
+        .from('replies')
+        .update({ is_best_answer: true })
+        .eq('id', replyId)
+        .select();
+
+    if (error) throw error;
+    return data;
+};

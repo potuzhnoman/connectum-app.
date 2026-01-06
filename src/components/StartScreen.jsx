@@ -1,5 +1,5 @@
 import React from 'react';
-import { Globe, ArrowRight, ShieldCheck, Activity } from 'lucide-react';
+import { Globe, Activity } from 'lucide-react';
 import SearchBar from './SearchBar';
 
 // --- Sub-Component: Language Ticker ---
@@ -227,5 +227,3 @@ const StartScreen = ({ onOpenModal, onLogin, supabase, onSearch, onResultClick }
 };
 
 export default StartScreen;
-
-// update

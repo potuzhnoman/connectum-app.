@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useOutletContext, Link } from 'react-router-dom';
-import { fetchQuestionByIdService, addReplyService } from '../services/questions';
+import { fetchQuestionByIdService, addReplyService, markBestAnswerService } from '../services/questions';
 import QuestionCard from '../components/QuestionCard';
 import { Loader2, ArrowLeft } from 'lucide-react';
 
 const QuestionPage = () => {
     const { id } = useParams();
-    const { openProfile, showStatusToast, session, loginWithGithub, loginWithGoogle, supabase } = useOutletContext();
+    const { openProfile, showStatusToast, session, loginWithGithub, loginWithGoogle, supabase, awardXP } = useOutletContext();
 
     const [question, setQuestion] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -53,6 +53,9 @@ const QuestionPage = () => {
         try {
             await addReplyService(replyPayload);
             showStatusToast("Answer posted", 'success');
+
+            // Award XP for posting answer
+            await awardXP(10, 'Posted answer');
         } catch (error) {
             showStatusToast(error.message || "Failed to post answer", 'error');
         }
@@ -72,7 +75,19 @@ const QuestionPage = () => {
                 id={`question-${question.id}`}
                 data={question}
                 onSubmitAnswer={handleSubmitAnswer}
-                onMarkBestAnswer={() => console.log('Refactor needed')}
+                onMarkBestAnswer={async (questionId, replyId, replyAuthorId) => {
+                    if (!session) return alert("Please login first.");
+
+                    try {
+                        await markBestAnswerService(replyId);
+                        showStatusToast("Best answer selected!", 'success');
+
+                        // Award XP to the answer author
+                        await awardXP(25, 'Answer marked as best');
+                    } catch (error) {
+                        showStatusToast(error.message || "Failed to mark best answer", 'error');
+                    }
+                }}
                 session={session}
                 onLoginGithub={loginWithGithub}
                 onLoginGoogle={loginWithGoogle}
