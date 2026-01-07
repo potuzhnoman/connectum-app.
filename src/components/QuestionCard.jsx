@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { MessageCircle, Share2, MoreHorizontal, CornerDownRight, CheckCircle, Award, Languages } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { translateText } from '../api';
 
 const QuestionCard = ({
   data,
@@ -31,39 +32,14 @@ const QuestionCard = ({
       return;
     }
 
-    setIsTranslating(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/translate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({
-          text: data.questionOriginal,
-          targetLang: 'EN'
-        }),
-      });
-      // Fallback if local API logic:
-      // Actually, let's try the direct path if previous worked.
-      // But wait, in a Vite SPA, /api usually needs a proxy or full URL if backend is elsewhere.
-      // Assuming Next.js style serverless was their intent, but they are using Vite.
-      // Let's assume standard fetch to an endpoint. 
-      // If it fails, we toast error.
-
-      const resData = await response.json();
-      if (resData.translatedText) {
-        setTranslatedText(resData.translatedText);
-        setIsTranslated(true);
-      } else {
-        throw new Error('Translation failed');
-      }
+      const text = await translateText(data.questionOriginal, 'EN');
+      setTranslatedText(text);
+      setIsTranslated(true);
     } catch (error) {
-      console.error(error);
-      // Mock translation for demo purposes if API fails
       setTranslatedText("[Mock Translation]: " + data.questionOriginal);
       setIsTranslated(true);
-      if (onErrorToast) onErrorToast("Translation service unavailable (Mock used)", "error");
+      if (onErrorToast) onErrorToast("Translation service unavailable", "error");
     } finally {
       setIsTranslating(false);
     }
@@ -150,8 +126,8 @@ const QuestionCard = ({
         <button
           onClick={() => setShowReplyInput(!showReplyInput)}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${showReplyInput
-              ? 'bg-cyan-500/10 text-cyan-300 ring-1 ring-cyan-500/30'
-              : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800 hover:text-white'
+            ? 'bg-cyan-500/10 text-cyan-300 ring-1 ring-cyan-500/30'
+            : 'bg-slate-800/50 text-slate-400 hover:bg-slate-800 hover:text-white'
             }`}
         >
           <MessageCircle className="w-4 h-4" />

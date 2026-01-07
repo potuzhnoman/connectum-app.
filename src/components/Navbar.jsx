@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import { useSearch } from '../contexts';
+
 const Navbar = ({
   onOpenModal,
   onOpenLeaderboard,
@@ -21,12 +23,11 @@ const Navbar = ({
   onLoginGithub,
   onLoginGoogle,
   onLogout,
-  onSearch,
   showSearch
 }) => {
+  const { searchQuery, setSearchQuery } = useSearch();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [localSearch, setLocalSearch] = useState('');
 
   // Handle Scroll Effect
   useEffect(() => {
@@ -39,7 +40,6 @@ const Navbar = ({
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    onSearch(localSearch);
   };
 
   const navLinks = [
@@ -56,8 +56,8 @@ const Navbar = ({
       <div className={`max-w-7xl mx-auto px-4 sm:px-6`}>
         <div
           className={`relative rounded-2xl transition-all duration-300 ${isScrolled
-              ? 'glass-panel px-6 py-3'
-              : 'bg-transparent px-2 py-2'
+            ? 'glass-panel px-6 py-3'
+            : 'bg-transparent px-2 py-2'
             }`}
         >
           <div className="flex items-center justify-between">
@@ -69,8 +69,7 @@ const Navbar = ({
                 className="group flex items-center gap-2.5 transition-opacity hover:opacity-80"
                 onClick={() => {
                   window.scrollTo({ top: 0, behavior: 'smooth' });
-                  onSearch('');
-                  setLocalSearch('');
+                  setSearchQuery('');
                 }}
               >
                 <div className="relative">
@@ -114,15 +113,15 @@ const Navbar = ({
 
               {/* Search Bar (Conditional) */}
               <div
-                className={`hidden md:flex items-center transition-all duration-300 ${showSearch ? 'opacity-100 translate-x-0 w-64' : 'opacity-0 translate-x-4 w-0 overflow-hidden'
+                className={`hidden md:flex items-center transition-all duration-300 ${showSearch || isScrolled ? 'opacity-100 translate-x-0 w-64' : 'opacity-0 translate-x-4 w-0 overflow-hidden'
                   }`}
               >
                 <form onSubmit={handleSearchSubmit} className="relative w-full group">
                   <input
                     type="text"
                     placeholder="Search questions..."
-                    value={localSearch}
-                    onChange={(e) => setLocalSearch(e.target.value)}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full bg-slate-900/50 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm text-slate-200 focus:outline-none focus:border-cyan-500/50 focus:bg-slate-900/80 transition-all placeholder:text-slate-600"
                   />
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-cyan-400 transition-colors" />

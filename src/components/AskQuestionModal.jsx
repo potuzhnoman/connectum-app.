@@ -8,10 +8,6 @@ const AskQuestionModal = ({ isOpen, onClose, onSubmit, session, onLoginGithub, o
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!session) {
-      alert("Please login to post a question.");
-      return;
-    }
     if (!formData.title) return;
     onSubmit(formData);
     setFormData({ title: '', language: 'English', category: 'Technology', details: '' }); // Reset
@@ -46,17 +42,17 @@ const AskQuestionModal = ({ isOpen, onClose, onSubmit, session, onLoginGithub, o
         </div>
 
         {!session ? (
-          <div className="text-center py-6 bg-slate-950/50 rounded-2xl border border-white/5 p-6">
-             <p className="text-slate-300 mb-6">You must be logged in to broadcast a question to the global network.</p>
+          <div className="text-center py-6 bg-slate-950/50 rounded-2xl border border-white/5 p-6 mb-6">
+             <p className="text-slate-300 mb-4">Login to earn XP and connect with experts worldwide.</p>
              <div className="space-y-3">
-               <button 
+               <button
                    onClick={onLoginGoogle}
                    className="flex items-center justify-center gap-2 w-full px-5 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold rounded-xl hover:scale-[1.01] hover:shadow-lg hover:shadow-cyan-500/20 transition-all focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
                  >
                    <Mail className="w-5 h-5" />
                    Login with Google
                </button>
-               <button 
+               <button
                    onClick={onLoginGithub}
                    className="flex items-center justify-center gap-2 w-full px-5 py-4 bg-slate-900/80 border border-cyan-500/30 text-cyan-100 font-bold rounded-xl hover:bg-slate-900/60 hover:border-cyan-400/50 hover:scale-[1.01] transition-all focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
                  >
@@ -64,9 +60,12 @@ const AskQuestionModal = ({ isOpen, onClose, onSubmit, session, onLoginGithub, o
                    Login with GitHub
                </button>
              </div>
+             <p className="text-slate-500 text-sm mt-4">Or continue anonymously (questions won't earn XP)</p>
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-6">
+        ) : null}
+
+        {/* Form is always available */}
+        <form onSubmit={handleSubmit} className={`space-y-6 ${session ? "" : "opacity-75"}`}>
             <div className="space-y-2">
               <label className="block text-xs font-bold text-cyan-400 uppercase tracking-widest">Question</label>
               <input 
@@ -145,7 +144,6 @@ const AskQuestionModal = ({ isOpen, onClose, onSubmit, session, onLoginGithub, o
               <Send className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
           </form>
-        )}
       </div>
     </div>
   );

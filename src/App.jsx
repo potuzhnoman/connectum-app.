@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import { supabase } from './services/supabase';
-
-// Components
-import MainLayout from './layouts/MainLayout';
+import { AuthProvider, useAuth, SearchProvider } from './contexts';
+import { supabase } from './api';
+import MainLayout from './components/MainLayout';
 import Home from './pages/Home';
 import QuestionPage from './pages/QuestionPage';
 import AskQuestionModal from './components/AskQuestionModal';
@@ -28,7 +26,7 @@ const StatusToast = ({ toast }) => {
 };
 
 const AppInner = () => {
-  const { session, loginWithGithub, loginWithGoogle, awardXP } = useAuth();
+  const { session, loginWithGithub, loginWithGoogle, awardXP, xpToast } = useAuth();
 
   // UI State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -37,7 +35,6 @@ const AppInner = () => {
   const [isManifestoOpen, setIsManifestoOpen] = useState(false);
   const [activeSection, setActiveSection] = useState(null);
   const [viewProfileId, setViewProfileId] = useState(null);
-  const [toastMessage, setToastMessage] = useState(null);
   const [statusToast, setStatusToast] = useState(null);
 
   // Toast Logic
@@ -79,7 +76,7 @@ const AppInner = () => {
               setIsLeaderboardOpen={setIsLeaderboardOpen}
               setIsProfileOpen={setIsProfileOpen}
               setIsManifestoOpen={setIsManifestoOpen}
-              onSearch={(q) => console.log('Global search not connected locally to layout yet', q)} // Todo: Global Search Context
+              onSearch={() => { }} // Controlled by global SearchContext
             >
               <Outlet context={outletContext} />
             </MainLayout>
@@ -103,26 +100,27 @@ const AppInner = () => {
           // AskQuestionModal calls `onSubmit`.
           // We need `handleAddQuestion` logic here to pass to Modal.
 
-          const { addQuestionService } = await import('./services/questions');
+          const { addQuestionService } = await import('./questions');
           try {
             await addQuestionService({
               text: data.title,
               description: data.details || '', // Add details/context field
               language: data.language,
               category: data.category,
-              author_name: session?.user?.user_metadata.full_name || session?.user?.email,
-              author_id: session?.user?.id,
+              author_name: session?.user?.user_metadata.full_name || session?.user?.email || 'Anonymous',
+              author_id: session?.user?.id || 'anonymous_' + Date.now(),
               xp_reward: 50
             });
+
             setIsModalOpen(false);
             showStatusToast("Question posted", 'success');
 
-            // Award XP for posting question
-            await awardXP(50, 'Posted question');
-            setToastMessage("+50 XP - Posted Question");
-            setTimeout(() => setToastMessage(null), 3000);
+            // Award XP for posting question (only if logged in)
+            if (session) {
+              await awardXP(50, 'Posted question');
+            }
           } catch (e) {
-            showStatusToast(e.message, 'error');
+            showStatusToast(e.message || 'Failed to post question', 'error');
           }
         }}
         session={session}
@@ -149,19 +147,23 @@ const AppInner = () => {
       />
 
       <XPToast
-        message={toastMessage}
-        isVisible={!!toastMessage}
+        message={xpToast}
+        isVisible={!!xpToast}
       />
       <StatusToast toast={statusToast} />
     </>
   );
 }
 
+import { SearchProvider } from './contexts';
+
 const App = () => {
   return (
-    <AuthProvider>
-      <AppInner />
-    </AuthProvider>
+    <SearchProvider>
+      <AuthProvider>
+        <AppInner />
+      </AuthProvider>
+    </SearchProvider>
   );
 };
 

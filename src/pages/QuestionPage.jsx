@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useOutletContext, Link } from 'react-router-dom';
-import { fetchQuestionByIdService, addReplyService, markBestAnswerService } from '../services/questions';
+import { fetchQuestionByIdService, addReplyService, markBestAnswerService } from '../api';
 import QuestionCard from '../components/QuestionCard';
 import { Loader2, ArrowLeft } from 'lucide-react';
 
@@ -17,7 +17,6 @@ const QuestionPage = () => {
             const data = await fetchQuestionByIdService(id);
             setQuestion(data);
         } catch (error) {
-            console.error(error);
             showStatusToast("Failed to load question", "error");
         } finally {
             setLoading(false);
@@ -45,17 +44,22 @@ const QuestionPage = () => {
         const replyPayload = {
             question_id: questionId,
             text: text,
-            author_name: session.user.user_metadata.full_name || session.user.email,
-            author_id: session.user.id,
-            avatar: session.user.user_metadata.avatar_url
+            author_name: session?.user?.user_metadata?.full_name || session?.user?.email || 'Anonymous',
+            author_id: session?.user?.id || 'anonymous_' + Date.now(),
+            avatar: session?.user?.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=Anonymous`
         };
 
         try {
             await addReplyService(replyPayload);
             showStatusToast("Answer posted", 'success');
 
-            // Award XP for posting answer
-            await awardXP(10, 'Posted answer');
+            // Award XP for posting answer (only if logged in)
+            if (session) {
+                await awardXP(10, 'Posted answer');
+            }
+
+            // Reload question to show new answer
+            await loadQuestion();
         } catch (error) {
             showStatusToast(error.message || "Failed to post answer", 'error');
         }

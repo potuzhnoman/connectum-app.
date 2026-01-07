@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Trophy, Loader2, Crown } from 'lucide-react';
+import { supabase } from '../api';
 
 const LeaderboardModal = ({ isOpen, onClose, supabase }) => {
   const [leaders, setLeaders] = useState([]);
@@ -79,26 +80,26 @@ const LeaderboardModal = ({ isOpen, onClose, supabase }) => {
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-      <div 
-        className="absolute inset-0 bg-slate-950/90 backdrop-blur-xl transition-opacity" 
+      <div
+        className="absolute inset-0 bg-slate-950/90 backdrop-blur-xl transition-opacity"
         onClick={onClose}
       />
-      
+
       <div className="relative w-full max-w-md bg-slate-900 border border-amber-500/20 rounded-3xl shadow-[0_0_80px_rgba(245,158,11,0.15)] p-0 animate-scale-in overflow-hidden flex flex-col max-h-[80vh]">
-        
+
         {/* Header */}
         <div className="p-6 pb-4 border-b border-white/5 bg-gradient-to-b from-amber-500/10 to-transparent relative">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent opacity-50" />
-          <button 
+          <button
             onClick={onClose}
             className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-full"
           >
             <X className="w-5 h-5" />
           </button>
-          
+
           <div className="flex items-center gap-3">
             <div className="p-3 bg-amber-500/20 rounded-xl border border-amber-500/30">
-               <Trophy className="w-6 h-6 text-amber-400" />
+              <Trophy className="w-6 h-6 text-amber-400" />
             </div>
             <div>
               <h2 className="text-xl font-bold text-white">Top Nodes</h2>
@@ -110,10 +111,10 @@ const LeaderboardModal = ({ isOpen, onClose, supabase }) => {
         {/* List */}
         <div className="overflow-y-auto p-4 space-y-2 custom-scrollbar">
           {loading ? (
-             <div className="flex flex-col items-center justify-center py-10">
-                <Loader2 className="w-8 h-8 text-amber-500 animate-spin mb-2" />
-                <p className="text-xs text-slate-500 font-mono">CALCULATING RANK...</p>
-             </div>
+            <div className="flex flex-col items-center justify-center py-10">
+              <Loader2 className="w-8 h-8 text-amber-500 animate-spin mb-2" />
+              <p className="text-xs text-slate-500 font-mono">CALCULATING RANK...</p>
+            </div>
           ) : (
             leaders.map((user, index) => {
               const rank = index + 1;
@@ -135,12 +136,12 @@ const LeaderboardModal = ({ isOpen, onClose, supabase }) => {
                     {rank}
                     {icon}
                   </div>
-                  
+
                   <div className="w-10 h-10 rounded-full bg-slate-800 overflow-hidden ring-2 ring-white/10 group-hover:ring-cyan-500/50 transition-all">
-                    <img 
-                      src={user.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.full_name}`} 
-                      alt={user.full_name} 
-                      className="w-full h-full object-cover" 
+                    <img
+                      src={user.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.full_name}`}
+                      alt={user.full_name}
+                      className="w-full h-full object-cover"
                     />
                   </div>
 

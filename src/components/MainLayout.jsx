@@ -1,7 +1,7 @@
 import React from 'react';
-import Navbar from '../components/Navbar';
+import Navbar from './Navbar';
 import { Cpu } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../contexts';
 
 const MainLayout = ({ children, activeSection, setActiveSection, setIsModalOpen, setIsLeaderboardOpen, setIsProfileOpen, setIsManifestoOpen, onSearch }) => {
     const { session, loginWithGithub, loginWithGoogle, logout, userXP, userLevel, xpProgress } = useAuth();
@@ -32,7 +32,7 @@ const MainLayout = ({ children, activeSection, setActiveSection, setIsModalOpen,
                 onLogout={logout}
                 supabase={null} // Navbar uses supabase directly? Warning: Refactor needed.
                 onSearch={onSearch}
-                showSearch={false} // TODO: Logic for this
+                showSearch={true}
             />
 
             <main>

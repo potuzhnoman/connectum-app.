@@ -1,6 +1,6 @@
 import React from 'react';
 import { Globe, Activity } from 'lucide-react';
-import SearchBar from './SearchBar';
+import { useSearch } from '../contexts';
 
 // --- Sub-Component: Language Ticker ---
 const LanguageTicker = () => {
@@ -37,39 +37,39 @@ const SoftSphere = () => {
     <div className="relative w-full h-[500px] md:h-[600px] flex items-center justify-center perspective-1000">
       {/* Abstract Glowing Gradient Behind */}
       <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/20 via-purple-500/20 to-transparent blur-[100px] rounded-full animate-pulse" />
-      
+
       {/* The Sphere Representation */}
       <div className="relative w-64 h-64 md:w-96 md:h-96 animate-slow-spin transform-style-3d">
         {/* Rings */}
         <div className="absolute inset-0 border border-cyan-400/30 rounded-full shadow-[0_0_30px_rgba(6,182,212,0.1)]" />
         <div className="absolute inset-0 border border-purple-500/30 rounded-full rotate-45 shadow-[0_0_30px_rgba(168,85,247,0.1)]" />
         <div className="absolute inset-0 border border-white/10 rounded-full rotate-90" />
-        
+
         {/* Orbiting Satellites (Language Tags) */}
         {/* Satellite 1: JP */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-6 w-12 h-12 animate-orbit-1">
-           <div className="w-full h-full bg-slate-900/90 backdrop-blur-md border border-cyan-400 p-2 rounded-xl shadow-[0_0_25px_rgba(6,182,212,0.4)] flex items-center justify-center animate-counter-spin">
-              <span className="text-cyan-300 font-bold text-xs">JP</span>
-           </div>
+          <div className="w-full h-full bg-slate-900/90 backdrop-blur-md border border-cyan-400 p-2 rounded-xl shadow-[0_0_25px_rgba(6,182,212,0.4)] flex items-center justify-center animate-counter-spin">
+            <span className="text-cyan-300 font-bold text-xs">JP</span>
+          </div>
         </div>
-        
+
         {/* Satellite 2: UA */}
         <div className="absolute bottom-10 right-0 w-12 h-12 animate-orbit-2">
-           <div className="w-full h-full bg-slate-900/90 backdrop-blur-md border border-purple-500 p-2 rounded-xl shadow-[0_0_25px_rgba(168,85,247,0.4)] flex items-center justify-center animate-counter-spin">
-              <span className="text-purple-300 font-bold text-xs">UA</span>
-           </div>
+          <div className="w-full h-full bg-slate-900/90 backdrop-blur-md border border-purple-500 p-2 rounded-xl shadow-[0_0_25px_rgba(168,85,247,0.4)] flex items-center justify-center animate-counter-spin">
+            <span className="text-purple-300 font-bold text-xs">UA</span>
+          </div>
         </div>
 
         {/* Satellite 3: EN */}
         <div className="absolute top-1/2 left-0 -translate-x-6 w-auto h-auto animate-orbit-3">
-           <div className="bg-emerald-900/90 backdrop-blur-md border border-emerald-500 px-3 py-1 rounded-full shadow-[0_0_25px_rgba(16,185,129,0.4)] animate-counter-spin">
-              <span className="text-emerald-300 font-mono text-[10px] font-bold">+50 XP</span>
-           </div>
+          <div className="bg-emerald-900/90 backdrop-blur-md border border-emerald-500 px-3 py-1 rounded-full shadow-[0_0_25px_rgba(16,185,129,0.4)] animate-counter-spin">
+            <span className="text-emerald-300 font-mono text-[10px] font-bold">+50 XP</span>
+          </div>
         </div>
 
         {/* Central Core */}
         <div className="absolute inset-0 m-auto w-32 h-32 bg-slate-900/60 backdrop-blur-md rounded-full border border-white/20 flex items-center justify-center shadow-[inset_0_0_30px_rgba(255,255,255,0.1)]">
-           <Globe className="w-16 h-16 text-white/90 drop-shadow-[0_0_15px_rgba(255,255,255,0.6)] animate-pulse" />
+          <Globe className="w-16 h-16 text-white/90 drop-shadow-[0_0_15px_rgba(255,255,255,0.6)] animate-pulse" />
         </div>
       </div>
     </div>
@@ -80,18 +80,18 @@ const SoftSphere = () => {
 const Hero = ({ onOpenModal, onLogin, supabase, onSearch, onResultClick }) => {
   return (
     <section className="relative pt-32 pb-20 px-6 flex flex-col items-center justify-center overflow-hidden">
-      
+
       {/* Background Decor */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none z-0">
-         <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-[120px] mix-blend-screen animate-pulse" style={{animationDuration: '4s'}}></div>
-         <div className="absolute bottom-0 right-[-10%] w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[120px] mix-blend-screen animate-pulse" style={{animationDuration: '7s'}}></div>
+        <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-[120px] mix-blend-screen animate-pulse" style={{ animationDuration: '4s' }}></div>
+        <div className="absolute bottom-0 right-[-10%] w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[120px] mix-blend-screen animate-pulse" style={{ animationDuration: '7s' }}></div>
       </div>
 
       {/* Grid Pattern */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none z-0"></div>
 
       <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10">
-        
+
         {/* Text Content */}
         <div className="text-left space-y-8">
           {/* Badge */}
@@ -112,14 +112,14 @@ const Hero = ({ onOpenModal, onLogin, supabase, onSearch, onResultClick }) => {
               </span>
             </h1>
             <p className="text-xl md:text-2xl text-slate-300 max-w-xl leading-relaxed font-light">
-              Ask about <span className="text-white font-semibold border-b border-cyan-500/50">Life</span> or <span className="text-white font-semibold border-b border-purple-500/50">Tech</span>. 
+              Ask about <span className="text-white font-semibold border-b border-cyan-500/50">Life</span> or <span className="text-white font-semibold border-b border-purple-500/50">Tech</span>.
               Get answers from everywhere.
             </p>
           </div>
 
           {/* Search Bar */}
-          <div className="hero-search animate-slide-in" style={{animationDelay: '0.2s'}}>
-            <SearchBar 
+          <div className="hero-search animate-slide-in" style={{ animationDelay: '0.2s' }}>
+            <SearchBar
               supabase={supabase}
               onSearch={onSearch}
               onResultClick={onResultClick}
@@ -130,7 +130,7 @@ const Hero = ({ onOpenModal, onLogin, supabase, onSearch, onResultClick }) => {
           </div>
 
           {/* Social Proof */}
-          <div className="pt-10 flex items-center gap-10 border-t border-white/10 animate-fade-in" style={{animationDelay: '0.4s'}}>
+          <div className="pt-10 flex items-center gap-10 border-t border-white/10 animate-fade-in" style={{ animationDelay: '0.4s' }}>
             <div>
               <p className="text-3xl font-mono font-bold text-white drop-shadow-md">12k+</p>
               <p className="text-xs text-cyan-200/70 uppercase tracking-widest font-semibold">Active Nodes</p>
@@ -156,7 +156,7 @@ const Hero = ({ onOpenModal, onLogin, supabase, onSearch, onResultClick }) => {
 };
 
 // --- Main Export: StartScreen ---
-const StartScreen = ({ onOpenModal, onLogin, supabase, onSearch, onResultClick }) => {
+const StartScreen = ({ onOpenModal }) => {
   return (
     <>
       <style>{`
@@ -213,13 +213,9 @@ const StartScreen = ({ onOpenModal, onLogin, supabase, onSearch, onResultClick }
            animation: counter-spin 20s linear infinite; 
         }
       `}</style>
-      
-      <Hero 
-        onOpenModal={onOpenModal} 
-        onLogin={onLogin}
-        supabase={supabase}
-        onSearch={onSearch}
-        onResultClick={onResultClick}
+
+      <Hero
+        onOpenModal={onOpenModal}
       />
       <LanguageTicker />
     </>
