@@ -100,7 +100,7 @@ const AppInner = () => {
           // AskQuestionModal calls `onSubmit`.
           // We need `handleAddQuestion` logic here to pass to Modal.
 
-          const { addQuestionService } = await import('./questions');
+          const { addQuestionService } = await import('./api');
           try {
             await addQuestionService({
               text: data.title,
@@ -155,7 +155,7 @@ const AppInner = () => {
   );
 }
 
-import { SearchProvider } from './contexts';
+
 
 const App = () => {
   return (
