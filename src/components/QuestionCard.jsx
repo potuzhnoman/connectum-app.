@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MessageCircle, Share2, MoreHorizontal, CornerDownRight, CheckCircle, Award, Languages } from 'lucide-react';
+import { MessageCircle, Share2, MoreHorizontal, CornerDownRight, CheckCircle, Award, Languages, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { translateText } from '../api';
 
@@ -20,6 +20,7 @@ const QuestionCard = ({
   const [isTranslated, setIsTranslated] = useState(false);
   const [translatedText, setTranslatedText] = useState(null);
   const [isTranslating, setIsTranslating] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Translation Logic
   const handleTranslate = async () => {
@@ -45,13 +46,18 @@ const QuestionCard = ({
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!replyText.trim()) return;
 
-    onSubmitAnswer(data.id, replyText);
-    setReplyText('');
-    // Keep expanded to see the new answer
+    setIsSubmitting(true);
+    try {
+      await onSubmitAnswer(data.id, replyText);
+      setReplyText('');
+      // Keep expanded to see the new answer
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -169,10 +175,14 @@ const QuestionCard = ({
                 <div className="absolute bottom-3 right-3">
                   <button
                     type="submit"
-                    disabled={!replyText.trim()}
-                    className="bg-cyan-600 hover:bg-cyan-500 text-white p-2 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-cyan-500/20"
+                    disabled={!replyText.trim() || isSubmitting}
+                    className="bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-600 text-white p-2 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-cyan-500/20"
                   >
-                    <CornerDownRight className="w-4 h-4" />
+                    {isSubmitting ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <CornerDownRight className="w-4 h-4" />
+                    )}
                   </button>
                 </div>
               </div>

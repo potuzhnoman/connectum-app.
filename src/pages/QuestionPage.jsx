@@ -39,7 +39,10 @@ const QuestionPage = () => {
     }, [id]);
 
     const handleSubmitAnswer = async (questionId, text) => {
-        if (!session) return alert("Please login first.");
+        if (!session) {
+            showStatusToast("Please login first", "error");
+            return;
+        }
 
         const replyPayload = {
             question_id: questionId,
@@ -80,7 +83,10 @@ const QuestionPage = () => {
                 data={question}
                 onSubmitAnswer={handleSubmitAnswer}
                 onMarkBestAnswer={async (questionId, replyId, replyAuthorId) => {
-                    if (!session) return alert("Please login first.");
+                    if (!session) {
+                        showStatusToast("Please login first", "error");
+                        return;
+                    }
 
                     try {
                         await markBestAnswerService(replyId);

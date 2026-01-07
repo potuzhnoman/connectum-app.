@@ -3,6 +3,8 @@ import { useOutletContext } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { supabase, fetchQuestionsService, addReplyService, markBestAnswerService } from '../api';
 import { useSearch } from '../contexts';
+import StartScreen from '../components/StartScreen';
+import QuestionCard from '../components/QuestionCard';
 
 const Home = () => {
     const { openAskModal, openProfile, showStatusToast, session, loginWithGithub, loginWithGoogle, awardXP } = useOutletContext();
@@ -99,7 +101,10 @@ const Home = () => {
 
     // markBestAnswer implementation
     const handleMarkBestAnswer = async (questionId, replyId, replyAuthorId) => {
-        if (!session) return alert("Please login first.");
+        if (!session) {
+            showStatusToast("Please login first", "error");
+            return;
+        }
 
         try {
             await markBestAnswerService(replyId);
@@ -116,9 +121,11 @@ const Home = () => {
         <>
             <StartScreen
                 onOpenModal={openAskModal}
-                onLogin={loginWithGithub}
                 supabase={supabase}
-                onSearch={() => { }} // Controlled by context now
+                onSearch={(query) => {
+                  // Можно добавить глобальный поиск
+                  console.log('Global search:', query);
+                }}
                 onResultClick={handleResultClick}
             />
 

@@ -91,6 +91,7 @@ const AppInner = () => {
       <AskQuestionModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        onErrorToast={showStatusToast}
         onSubmit={async (data) => {
           // We need to handle submission here or pass handler. 
           // Refactoring: Home handled it before. 

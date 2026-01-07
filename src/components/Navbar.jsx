@@ -113,7 +113,7 @@ const Navbar = ({
 
               {/* Search Bar (Conditional) */}
               <div
-                className={`hidden md:flex items-center transition-all duration-300 ${showSearch || isScrolled ? 'opacity-100 translate-x-0 w-64' : 'opacity-0 translate-x-4 w-0 overflow-hidden'
+                className={`hidden sm:flex items-center transition-all duration-300 ${showSearch || isScrolled ? 'opacity-100 translate-x-0 w-48 lg:w-64' : 'opacity-0 translate-x-4 w-0 overflow-hidden'
                   }`}
               >
                 <form onSubmit={handleSearchSubmit} className="relative w-full group">
@@ -131,7 +131,7 @@ const Navbar = ({
               {session ? (
                 <>
                   {/* XP Bar */}
-                  <div className="hidden lg:flex flex-col items-end mr-2 group cursor-default">
+                  <div className="hidden md:flex flex-col items-end mr-2 group cursor-default">
                     <div className="flex items-center gap-1.5 text-xs font-bold text-cyan-300 uppercase tracking-wider mb-0.5">
                       <Sparkles className="w-3 h-3 text-yellow-400" />
                       <span>Lvl {level}</span>

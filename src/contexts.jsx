@@ -56,15 +56,39 @@ export const AuthProvider = ({ children }) => {
 
     const awardXP = async (amount, reason = '') => {
         if (!session?.user?.id) return;
+
         const newXP = userXP + amount;
         setUserXP(newXP);
         setXpToast(`+${amount} XP - ${reason}`);
         setTimeout(() => setXpToast(null), 3000);
 
         try {
-            await supabase.from('profiles').update({ xp: newXP }).eq('id', session.user.id);
+            // Сначала проверим, существует ли профиль
+            const { data: existingProfile } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('id', session.user.id)
+                .single();
+
+            if (existingProfile) {
+                // Обновляем существующий профиль
+                await supabase.from('profiles').update({ xp: newXP }).eq('id', session.user.id);
+            } else {
+                // Создаем новый профиль
+                const { data: { user } } = await supabase.auth.getUser();
+                const newProfile = {
+                    id: session.user.id,
+                    full_name: user?.user_metadata?.full_name || user?.email,
+                    avatar_url: user?.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email}`,
+                    xp: newXP
+                };
+                await supabase.from('profiles').insert([newProfile]);
+            }
+
             localStorage.setItem(`user_xp_${session.user.id}`, newXP.toString());
         } catch (error) {
+            console.error('XP update failed:', error);
+            // Все равно сохраняем в localStorage как fallback
             localStorage.setItem(`user_xp_${session.user.id}`, newXP.toString());
         }
     };

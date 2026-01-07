@@ -47,7 +47,10 @@ export const fetchQuestionsService = async () => {
             .order('created_at', { ascending: false, foreignTable: 'replies' })
             .order('created_at', { ascending: false });
 
-        if (error) throw error;
+        if (error) {
+            console.error('Supabase error:', error);
+            throw new Error(`Failed to fetch questions: ${error.message}`);
+        }
 
         return data.map(q => {
             const { flag, country } = getFlagAndCountry(q.language);
@@ -148,20 +151,28 @@ export const fetchQuestionByIdService = async (id) => {
 export const addQuestionService = async (questionData) => {
     try {
         const { data, error } = await supabase.from('questions').insert([questionData]).select();
-        if (error) throw error;
+        if (error) {
+            console.error('Supabase error:', error);
+            throw new Error(`Failed to add question: ${error.message}`);
+        }
         return data;
     } catch (error) {
+        console.warn('Using localStorage fallback for question:', error);
         // Fallback: store in localStorage for testing
-        const questions = JSON.parse(localStorage.getItem('local_questions') || '[]');
-        const newQuestion = {
-            id: Date.now().toString(),
-            ...questionData,
-            created_at: new Date().toISOString(),
-            replies: []
-        };
-        questions.unshift(newQuestion);
-        localStorage.setItem('local_questions', JSON.stringify(questions));
-        return [newQuestion];
+        try {
+            const questions = JSON.parse(localStorage.getItem('local_questions') || '[]');
+            const newQuestion = {
+                id: Date.now().toString(),
+                ...questionData,
+                created_at: new Date().toISOString(),
+                replies: []
+            };
+            questions.unshift(newQuestion);
+            localStorage.setItem('local_questions', JSON.stringify(questions));
+            return [newQuestion];
+        } catch (localError) {
+            throw new Error('Failed to save question locally');
+        }
     }
 };
 

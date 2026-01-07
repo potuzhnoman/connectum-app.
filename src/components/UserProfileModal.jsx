@@ -56,7 +56,12 @@ const UserProfileModal = ({ isOpen, onClose, userId, supabase }) => {
         } catch (err) {
           console.error("Error fetching user data:", err);
           // Set empty data on error
-          setProfile(null);
+          setProfile({
+            id: userId,
+            full_name: 'Error loading profile',
+            avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${userId}`,
+            xp: 0
+          });
           setHistory([]);
         } finally {
           setLoading(false);

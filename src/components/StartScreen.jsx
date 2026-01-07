@@ -1,6 +1,81 @@
-import React from 'react';
-import { Globe, Activity } from 'lucide-react';
+import React, { useState } from 'react';
+import { Globe, Activity, Search } from 'lucide-react';
 import { useSearch } from '../contexts';
+
+// --- Sub-Component: Search Bar ---
+const SearchBar = ({ supabase, onSearch, onResultClick }) => {
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  const handleSearch = async (searchQuery) => {
+    if (!searchQuery.trim()) {
+      setResults([]);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      // Поиск по вопросам в Supabase
+      const { data, error } = await supabase
+        .from('questions')
+        .select('*')
+        .ilike('text', `%${searchQuery}%`)
+        .limit(5);
+
+      if (!error && data) {
+        setResults(data);
+      }
+    } catch (error) {
+      console.warn('Search failed:', error);
+      setResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSearch(query);
+    handleSearch(query);
+  };
+
+  return (
+    <div className="relative w-full max-w-md">
+      <form onSubmit={handleSubmit} className="relative">
+        <input
+          type="text"
+          placeholder="Ask anything..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-full py-3 px-6 pr-12 text-white placeholder:text-slate-400 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all"
+        />
+        <button
+          type="submit"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-cyan-400 transition-colors"
+        >
+          <Search className="w-5 h-5" />
+        </button>
+      </form>
+
+      {/* Результаты поиска */}
+      {results.length > 0 && (
+        <div className="absolute top-full mt-2 w-full bg-slate-900/90 backdrop-blur-md border border-white/10 rounded-2xl shadow-xl z-50 max-h-64 overflow-y-auto">
+          {results.map((question) => (
+            <button
+              key={question.id}
+              onClick={() => onResultClick(question)}
+              className="w-full text-left p-4 hover:bg-white/5 transition-colors border-b border-white/5 last:border-b-0"
+            >
+              <p className="text-sm text-white line-clamp-2">{question.text}</p>
+              <p className="text-xs text-slate-500 mt-1">{question.author_name}</p>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 // --- Sub-Component: Language Ticker ---
 const LanguageTicker = () => {
@@ -156,7 +231,7 @@ const Hero = ({ onOpenModal, onLogin, supabase, onSearch, onResultClick }) => {
 };
 
 // --- Main Export: StartScreen ---
-const StartScreen = ({ onOpenModal }) => {
+const StartScreen = ({ onOpenModal, onSearch, onResultClick, supabase }) => {
   return (
     <>
       <style>{`
@@ -216,6 +291,9 @@ const StartScreen = ({ onOpenModal }) => {
 
       <Hero
         onOpenModal={onOpenModal}
+        onSearch={onSearch}
+        onResultClick={onResultClick}
+        supabase={supabase}
       />
       <LanguageTicker />
     </>

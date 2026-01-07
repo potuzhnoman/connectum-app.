@@ -1,16 +1,38 @@
 import React, { useState } from 'react';
-import { X, MessageCircle, Mail, Github, Globe, Code2, Send } from 'lucide-react';
+import { X, MessageCircle, Mail, Github, Globe, Code2, Send, Loader2 } from 'lucide-react';
 
-const AskQuestionModal = ({ isOpen, onClose, onSubmit, session, onLoginGithub, onLoginGoogle }) => {
+const AskQuestionModal = ({ isOpen, onClose, onSubmit, session, onLoginGithub, onLoginGoogle, onErrorToast }) => {
   const [formData, setFormData] = useState({ title: '', language: 'English', category: 'Technology', details: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   if (!isOpen) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.title) return;
-    onSubmit(formData);
-    setFormData({ title: '', language: 'English', category: 'Technology', details: '' }); // Reset
+
+    // Валидация
+    if (!formData.title.trim()) {
+      onErrorToast("Please enter a question title", "error");
+      return;
+    }
+
+    if (formData.title.length < 5) {
+      onErrorToast("Question title must be at least 5 characters long", "error");
+      return;
+    }
+
+    if (!formData.language) {
+      onErrorToast("Please select a language", "error");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await onSubmit(formData);
+      setFormData({ title: '', language: 'English', category: 'Technology', details: '' });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -132,16 +154,23 @@ const AskQuestionModal = ({ isOpen, onClose, onSubmit, session, onLoginGithub, o
                />
             </div>
 
-            <button 
-              type="submit" 
-              className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-cyan-500/25 transition-all flex items-center justify-center gap-2 group transform hover:-translate-y-1 hover:scale-[1.01] focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 disabled:from-slate-600 disabled:to-slate-600 text-white font-bold py-4 rounded-xl shadow-lg shadow-cyan-500/25 transition-all flex items-center justify-center gap-2 group transform hover:-translate-y-1 hover:scale-[1.01] disabled:hover:translate-y-0 disabled:hover:scale-100 focus:outline-none focus:ring-2 focus:ring-cyan-400/40 disabled:cursor-not-allowed"
             >
-              <span className="relative flex h-3 w-3 mr-1">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-white/50"></span>
-              </span>
-              Broadcast to Network
-              <Send className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              {isSubmitting ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  <span className="relative flex h-3 w-3 mr-1">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-white/50"></span>
+                  </span>
+                  Broadcast to Network
+                  <Send className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
             </button>
           </form>
       </div>
