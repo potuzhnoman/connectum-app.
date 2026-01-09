@@ -34,11 +34,14 @@ const QuestionCard = ({
     }
 
     try {
-      const text = await translateText(data.questionOriginal, 'EN');
+      setIsTranslating(true);
+      const sourceText = data?.questionOriginal ?? data?.text ?? '';
+      const text = await translateText(sourceText, 'EN');
       setTranslatedText(text);
       setIsTranslated(true);
     } catch (error) {
-      setTranslatedText("[Mock Translation]: " + data.questionOriginal);
+      const sourceText = data?.questionOriginal ?? data?.text ?? '';
+      setTranslatedText("[Mock Translation]: " + sourceText);
       setIsTranslated(true);
       if (onErrorToast) onErrorToast("Translation service unavailable", "error");
     } finally {
@@ -108,7 +111,7 @@ const QuestionCard = ({
       {/* Content */}
       <div className="mb-6 relative">
         <h3 className="text-xl sm:text-2xl font-semibold text-slate-100 leading-relaxed">
-          {isTranslated ? translatedText : data.questionOriginal}
+          {isTranslated ? translatedText : (data?.questionOriginal ?? data?.text ?? '')}
         </h3>
 
         {/* Translation Toggle */}
@@ -161,7 +164,7 @@ const QuestionCard = ({
           {session ? (
             <form onSubmit={handleSubmit} className="flex gap-3 mb-8">
               <img
-                src={session.user.user_metadata.avatar_url}
+                src={session.user.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email || session.user.id}`}
                 alt="Me"
                 className="w-10 h-10 rounded-xl bg-slate-800 object-cover"
               />
@@ -199,7 +202,7 @@ const QuestionCard = ({
 
           {/* List of Replies */}
           <div className="space-y-6">
-            {data.replies.map((reply) => (
+            {(data?.replies || []).map((reply) => (
               <div key={reply.id} className={`relative pl-4 sm:pl-0 ${reply.isBestAnswer ? 'bg-emerald-500/5 -mx-4 px-4 py-4 rounded-2xl border border-emerald-500/10' : ''}`}>
                 {reply.isBestAnswer && (
                   <div className="absolute top-2 right-4 flex items-center gap-1 text-emerald-400 text-xs font-bold uppercase tracking-wider">
@@ -227,7 +230,7 @@ const QuestionCard = ({
                       </div>
 
                       {/* Only Author of question can mark best answer */}
-                      {session && session.user.id === data.authorId && !data.replies.some(r => r.isBestAnswer) && (
+                      {session && session.user.id === data.authorId && !(data?.replies || []).some(r => r.isBestAnswer) && (
                         <button
                           onClick={() => onMarkBestAnswer(data.id, reply.id, reply.authorId)}
                           className="text-[10px] font-bold text-slate-500 hover:text-emerald-400 transition-colors uppercase tracking-wider border border-slate-800 hover:border-emerald-500/30 px-2 py-1 rounded-full"

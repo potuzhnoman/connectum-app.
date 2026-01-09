@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
-import { AuthProvider, useAuth, SearchProvider } from './contexts';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from 'react-hot-toast';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { supabase } from './api';
 import MainLayout from './components/MainLayout';
 import Home from './pages/Home';
@@ -9,6 +11,8 @@ import AskQuestionModal from './components/AskQuestionModal';
 import LeaderboardModal from './components/LeaderboardModal';
 import UserProfileModal from './components/UserProfileModal';
 import ManifestoModal from './components/ManifestoModal';
+import AuthModal from './components/AuthModal';
+import NotificationCenter from './components/NotificationCenter';
 import XPToast from './components/XPToast';
 
 const StatusToast = ({ toast }) => {
@@ -26,13 +30,14 @@ const StatusToast = ({ toast }) => {
 };
 
 const AppInner = () => {
-  const { session, loginWithGithub, loginWithGoogle, awardXP, xpToast } = useAuth();
+  const { user, signIn, signInWithGoogle, signInWithGitHub } = useAuth();
 
   // UI State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isManifestoOpen, setIsManifestoOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [activeSection, setActiveSection] = useState(null);
   const [viewProfileId, setViewProfileId] = useState(null);
   const [statusToast, setStatusToast] = useState(null);
@@ -45,24 +50,20 @@ const AppInner = () => {
 
   // Prepare Context for Outlets (Pages)
   const outletContext = {
-    openAskModal: () => setIsModalOpen(true),
+    openAskModal: () => user ? setIsModalOpen(true) : setIsAuthOpen(true),
     openLeaderboard: () => setIsLeaderboardOpen(true),
     openProfile: (userId) => {
-      if (userId) setViewProfileId(userId); else setViewProfileId(session?.user?.id);
+      if (userId) setViewProfileId(userId); else setViewProfileId(user?.id);
       setIsProfileOpen(true);
     },
     openManifesto: () => setIsManifestoOpen(true),
     showStatusToast,
-    session,
-    loginWithGithub,
-    loginWithGoogle,
-    supabase // Legacy support for components using direct prop
+    user,
+    signIn,
+    signInWithGoogle,
+    signInWithGitHub,
+    supabase
   };
-
-  // XP Toast Handler (Stub for now, or assume managed by subscriptions/events)
-  // For this refactor, we rely on Supabase Realtime in Home to fetch new data, 
-  // but showing XP toast was manual. 
-  // We can add a global event listener or Context method for XP Toast if needed.
 
   return (
     <>
@@ -72,11 +73,11 @@ const AppInner = () => {
             <MainLayout
               activeSection={activeSection}
               setActiveSection={setActiveSection}
-              setIsModalOpen={setIsModalOpen}
+              setIsModalOpen={() => user ? setIsModalOpen(true) : setIsAuthOpen(true)}
               setIsLeaderboardOpen={setIsLeaderboardOpen}
               setIsProfileOpen={setIsProfileOpen}
               setIsManifestoOpen={setIsManifestoOpen}
-              onSearch={() => { }} // Controlled by global SearchContext
+              onSearch={() => { }}
             >
               <Outlet context={outletContext} />
             </MainLayout>
@@ -93,40 +94,27 @@ const AppInner = () => {
         onClose={() => setIsModalOpen(false)}
         onErrorToast={showStatusToast}
         onSubmit={async (data) => {
-          // We need to handle submission here or pass handler. 
-          // Refactoring: Home handled it before. 
-          // Ideally we move addQuestionService here or to Context.
-          // For now, let's keep it simple: we pass session to modal, modal calls prop.
-          // Oh wait, StartScreen called handleAddQuestion.
-          // AskQuestionModal calls `onSubmit`.
-          // We need `handleAddQuestion` logic here to pass to Modal.
-
           const { addQuestionService } = await import('./api');
           try {
             await addQuestionService({
               text: data.title,
-              description: data.details || '', // Add details/context field
+              description: data.details || '',
               language: data.language,
               category: data.category,
-              author_name: session?.user?.user_metadata.full_name || session?.user?.email || 'Anonymous',
-              author_id: session?.user?.id || 'anonymous_' + Date.now(),
+              author_name: user?.user_metadata?.full_name || user?.email || 'Anonymous',
+              author_id: user?.id || 'anonymous_' + Date.now(),
               xp_reward: 50
             });
 
             setIsModalOpen(false);
             showStatusToast("Question posted", 'success');
-
-            // Award XP for posting question (only if logged in)
-            if (session) {
-              await awardXP(50, 'Posted question');
-            }
           } catch (e) {
             showStatusToast(e.message || 'Failed to post question', 'error');
           }
         }}
-        session={session}
-        onLoginGithub={loginWithGithub}
-        onLoginGoogle={loginWithGoogle}
+        session={user}
+        onLoginGithub={signInWithGitHub}
+        onLoginGoogle={signInWithGoogle}
       />
 
       <LeaderboardModal
@@ -147,9 +135,14 @@ const AppInner = () => {
         onClose={() => setIsManifestoOpen(false)}
       />
 
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+      />
+
       <XPToast
-        message={xpToast}
-        isVisible={!!xpToast}
+        message={statusToast?.message}
+        isVisible={!!statusToast}
       />
       <StatusToast toast={statusToast} />
     </>
@@ -159,12 +152,45 @@ const AppInner = () => {
 
 
 const App = () => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 1000 * 60 * 5, // 5 minutes
+        retry: 1,
+      },
+    },
+  });
+
   return (
-    <SearchProvider>
+    <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <AppInner />
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: '#363636',
+              color: '#fff',
+            },
+            success: {
+              duration: 3000,
+              iconTheme: {
+                primary: '#4ade80',
+                secondary: '#fff',
+              },
+            },
+            error: {
+              duration: 5000,
+              iconTheme: {
+                primary: '#ef4444',
+                secondary: '#fff',
+              },
+            },
+          }}
+        />
       </AuthProvider>
-    </SearchProvider>
+    </QueryClientProvider>
   );
 };
 

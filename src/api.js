@@ -9,6 +9,214 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+// --- Storage Utilities ---
+
+export const uploadAvatar = async (file, userId) => {
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${userId}/avatar.${fileExt}`;
+  
+  const { data, error } = await supabase.storage
+    .from('avatars')
+    .upload(fileName, file, {
+      cacheControl: '3600',
+      upsert: true
+    });
+
+  if (error) throw error;
+
+  const { data: { publicUrl } } = supabase.storage
+    .from('avatars')
+    .getPublicUrl(fileName);
+
+  return publicUrl;
+};
+
+export const uploadAttachment = async (file, questionId) => {
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${questionId}/${Date.now()}.${fileExt}`;
+  
+  const { data, error } = await supabase.storage
+    .from('attachments')
+    .upload(fileName, file, {
+      cacheControl: '3600'
+    });
+
+  if (error) throw error;
+
+  const { data: { publicUrl } } = supabase.storage
+    .from('attachments')
+    .getPublicUrl(fileName);
+
+  return {
+    url: publicUrl,
+    name: file.name,
+    size: file.size,
+    type: file.type
+  };
+};
+
+export const deleteFile = async (bucket, path) => {
+  const { error } = await supabase.storage
+    .from(bucket)
+    .remove([path]);
+
+  if (error) throw error;
+};
+
+// --- Profile Management ---
+
+export const updateProfile = async (userId, updates) => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .upsert({
+      id: userId,
+      ...updates,
+      updated_at: new Date().toISOString()
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
+export const getProfile = async (userId) => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .single();
+
+  if (error && error.code !== 'PGRST116') {
+    throw error;
+  }
+
+  return data;
+};
+
+export const searchProfiles = async (query) => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, username, full_name, avatar_url, xp, reputation')
+    .or(`username.ilike.%${query}%,full_name.ilike.%${query}%`)
+    .limit(10);
+
+  if (error) throw error;
+  return data;
+};
+
+// --- Notifications ---
+
+export const createNotification = async (userId, type, content, relatedId = null) => {
+  const { data, error } = await supabase
+    .from('notifications')
+    .insert({
+      user_id: userId,
+      type,
+      content,
+      related_id: relatedId,
+      read: false
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
+export const getNotifications = async (userId, limit = 20) => {
+  const { data, error } = await supabase
+    .from('notifications')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return data;
+};
+
+export const markNotificationRead = async (notificationId) => {
+  const { error } = await supabase
+    .from('notifications')
+    .update({ read: true })
+    .eq('id', notificationId);
+
+  if (error) throw error;
+};
+
+export const getUnreadNotificationCount = async (userId) => {
+  const { count, error } = await supabase
+    .from('notifications')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('read', false);
+
+  if (error) throw error;
+  return count;
+};
+
+// --- Leaderboard ---
+
+export const getLeaderboard = async (limit = 50, timeframe = 'all') => {
+  let query = supabase
+    .from('profiles')
+    .select('id, username, full_name, avatar_url, xp, reputation, created_at')
+    .order('xp', { ascending: false })
+    .limit(limit);
+
+  if (timeframe === 'monthly') {
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+    
+    query = query.gte('created_at', startOfMonth.toISOString());
+  } else if (timeframe === 'weekly') {
+    const startOfWeek = new Date();
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+    
+    query = query.gte('created_at', startOfWeek.toISOString());
+  }
+
+  const { data, error } = await query;
+  
+  if (error) throw error;
+  return data;
+};
+
+// --- XP System ---
+
+export const awardXP = async (userId, amount, reason, relatedId = null) => {
+  // Update user's XP
+  const { error: updateError } = await supabase.rpc('award_xp', {
+    user_id: userId,
+    xp_amount: amount
+  });
+
+  if (updateError) throw updateError;
+
+  // Create XP transaction record
+  const { error: transactionError } = await supabase
+    .from('xp_transactions')
+    .insert({
+      user_id: userId,
+      amount,
+      reason,
+      related_id: relatedId
+    });
+
+  if (transactionError) throw transactionError;
+
+  // Create notification
+  await createNotification(
+    userId,
+    'xp_awarded',
+    `You earned ${amount} XP for ${reason}`,
+    relatedId
+  );
+};
+
 // --- Utilities ---
 
 export const getFlagAndCountry = (language) => {
@@ -100,7 +308,18 @@ export const fetchQuestionsService = async () => {
                 questionTranslated: null,
                 xp: q.xp_reward || 0,
                 comments: q.replies ? q.replies.length : 0,
-                replies: q.replies || [],
+                replies: q.replies ? q.replies
+                    .map(r => ({
+                        id: r.id,
+                        authorId: r.author_id,
+                        author: r.author_name,
+                        text: r.text,
+                        time: formatTimeAgo(r.created_at),
+                        avatar: r.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${r.author_name}`,
+                        isBestAnswer: r.is_best_answer || false
+                    }))
+                    .sort((a, b) => b.isBestAnswer - a.isBestAnswer)
+                    : [],
                 isNew: false
             };
         });

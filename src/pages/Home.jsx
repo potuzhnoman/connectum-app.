@@ -8,7 +8,7 @@ import QuestionCard from '../components/QuestionCard';
 
 const Home = () => {
     const { openAskModal, openProfile, showStatusToast, session, loginWithGithub, loginWithGoogle, awardXP } = useOutletContext();
-    const { searchQuery } = useSearch();
+    const { searchQuery, setSearchQuery } = useSearch();
 
     const [questions, setQuestions] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -123,8 +123,7 @@ const Home = () => {
                 onOpenModal={openAskModal}
                 supabase={supabase}
                 onSearch={(query) => {
-                  // Можно добавить глобальный поиск
-                  console.log('Global search:', query);
+                  setSearchQuery(query);
                 }}
                 onResultClick={handleResultClick}
             />

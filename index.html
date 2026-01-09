@@ -7,19 +7,32 @@
     <title>Connectum - Global Knowledge Network</title>
     <meta name="description" content="Connect with experts worldwide, ask questions in any language, earn XP by contributing to the global knowledge network." />
 
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#3b82f6" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Connectum" />
+    <link rel="apple-touch-icon" href="/icon-192x192.png" />
+    
+    <!-- Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Preconnect to Supabase -->
+    <link rel="preconnect" href="https://your-project.supabase.co" />
+    
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://connectum.net/" />
     <meta property="og:title" content="Connectum - Global Knowledge Network" />
     <meta property="og:description" content="Connect with experts worldwide, ask questions in any language, earn XP by contributing to the global knowledge network." />
-    <meta property="og:image" content="https://connectum.net/og-image.png" />
+    <meta property="og:image" content="/vite.svg" />
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:url" content="https://connectum.net/" />
     <meta property="twitter:title" content="Connectum - Global Knowledge Network" />
     <meta property="twitter:description" content="Connect with experts worldwide, ask questions in any language, earn XP by contributing to the global knowledge network." />
-    <meta property="twitter:image" content="https://connectum.net/og-image.png" />
+    <meta property="twitter:image" content="/vite.svg" />
 
     <!-- Additional SEO -->
     <meta name="keywords" content="knowledge network, global questions, language translation, expert answers, earn XP, programming help, tech support" />
@@ -29,5 +42,20 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('SW registered: ', registration);
+            })
+            .catch((registrationError) => {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      }
+    </script>
   </body>
 </html>

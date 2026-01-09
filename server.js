@@ -10,7 +10,7 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-const DEEPL_API_KEY = process.env.VITE_DEEPL_API_KEY;
+const DEEPL_API_KEY = process.env.DEEPL_API_KEY || process.env.VITE_DEEPL_API_KEY;
 
 // Real DeepL API integration
 app.post('/api/translate', async (req, res) => {
