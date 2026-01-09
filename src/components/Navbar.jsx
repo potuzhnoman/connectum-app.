@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-import { useSearch } from '../contexts';
+import { useSearch } from '../contexts.jsx';
 
 const Navbar = ({
   onOpenModal,

@@ -18,7 +18,7 @@
     <link rel="manifest" href="/manifest.json" />
     
     <!-- Preconnect to Supabase -->
-    <link rel="preconnect" href="https://your-project.supabase.co" />
+    <link rel="preconnect" href="https://hwzlhbcuqbsnrtfmnmpu.supabase.co" />
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
@@ -45,7 +45,8 @@
     
     <!-- Service Worker Registration -->
     <script>
-      if ('serviceWorker' in navigator) {
+      const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+      if (!isLocalhost && 'serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js')
             .then((registration) => {

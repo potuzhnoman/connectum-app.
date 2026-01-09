@@ -51,12 +51,13 @@ const Home = () => {
     }, []);
 
     // Derived State: Filtered Questions
-    const filteredQuestions = searchQuery.trim() === ''
+    const normalizedQuery = (searchQuery || '').trim();
+    const filteredQuestions = normalizedQuery === ''
         ? questions
         : questions.filter(q =>
-            q.questionOriginal.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            q.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            q.category?.toLowerCase().includes(searchQuery.toLowerCase())
+            q.questionOriginal.toLowerCase().includes(normalizedQuery.toLowerCase()) ||
+            q.name.toLowerCase().includes(normalizedQuery.toLowerCase()) ||
+            q.category?.toLowerCase().includes(normalizedQuery.toLowerCase())
         );
 
     const handleResultClick = (result) => {

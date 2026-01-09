@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Globe, Activity, Search } from 'lucide-react';
-import { useSearch } from '../contexts';
+import { useSearch } from '../contexts.jsx';
 
 // --- Sub-Component: Search Bar ---
 const SearchBar = ({ supabase, onSearch, onResultClick }) => {

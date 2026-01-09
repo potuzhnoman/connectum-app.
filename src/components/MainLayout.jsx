@@ -1,10 +1,14 @@
 import React from 'react';
 import Navbar from './Navbar';
 import { Cpu } from 'lucide-react';
-import { useAuth } from '../contexts';
+import { useAuth } from '../contexts/AuthContext';
 
 const MainLayout = ({ children, activeSection, setActiveSection, setIsModalOpen, setIsLeaderboardOpen, setIsProfileOpen, setIsManifestoOpen, onSearch }) => {
-    const { session, loginWithGithub, loginWithGoogle, logout, userXP, level, xpProgress } = useAuth();
+    const { user, signInWithGoogle, signInWithGitHub, signOut } = useAuth();
+    const session = user ? { user } : null;
+    const userXP = 0;
+    const level = 1;
+    const xpProgress = 0;
 
     // XP and Level calculation should ideally be in a Context or Hook too, 
     // but for now we might pass it down or refactor later.
@@ -27,9 +31,9 @@ const MainLayout = ({ children, activeSection, setActiveSection, setIsModalOpen,
                 level={level}
                 xpProgress={xpProgress / 100}
                 session={session}
-                onLoginGithub={loginWithGithub}
-                onLoginGoogle={loginWithGoogle}
-                onLogout={logout}
+                onLoginGithub={signInWithGitHub}
+                onLoginGoogle={signInWithGoogle}
+                onLogout={signOut}
                 supabase={null} // Navbar uses supabase directly? Warning: Refactor needed.
                 onSearch={onSearch}
                 showSearch={true}
