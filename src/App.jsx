@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SearchProvider } from './contexts.jsx';
@@ -13,7 +12,6 @@ import LeaderboardModal from './components/LeaderboardModal';
 import UserProfileModal from './components/UserProfileModal';
 import ManifestoModal from './components/ManifestoModal';
 import AuthModal from './components/AuthModal';
-import NotificationCenter from './components/NotificationCenter';
 import XPToast from './components/XPToast';
 
 const StatusToast = ({ toast }) => {
@@ -32,6 +30,7 @@ const StatusToast = ({ toast }) => {
 
 const AppInner = () => {
   const { user, signIn, signInWithGoogle, signInWithGitHub } = useAuth();
+  const session = user ? { user } : null;
 
   // UI State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -60,9 +59,21 @@ const AppInner = () => {
     openManifesto: () => setIsManifestoOpen(true),
     showStatusToast,
     user,
+    session,
     signIn,
     signInWithGoogle,
     signInWithGitHub,
+    loginWithGoogle: signInWithGoogle,
+    loginWithGithub: signInWithGitHub,
+    awardXP: async (amount, reason = '', relatedId = null) => {
+      if (!user?.id) return;
+      try {
+        const { awardXP } = await import('./api');
+        await awardXP(user.id, amount, reason, relatedId);
+      } catch {
+        // Ignore XP award errors to avoid breaking core UX
+      }
+    },
     supabase
   };
 
@@ -153,47 +164,36 @@ const AppInner = () => {
 
 
 const App = () => {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        staleTime: 1000 * 60 * 5, // 5 minutes
-        retry: 1,
-      },
-    },
-  });
-
   return (
-    <QueryClientProvider client={queryClient}>
-      <SearchProvider>
-        <AuthProvider>
-          <AppInner />
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              duration: 4000,
-              style: {
-                background: '#363636',
-                color: '#fff',
+    <SearchProvider>
+      <AuthProvider>
+        <AppInner />
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: '#363636',
+              color: '#fff',
+            },
+            success: {
+              duration: 3000,
+              iconTheme: {
+                primary: '#4ade80',
+                secondary: '#fff',
               },
-              success: {
-                duration: 3000,
-                iconTheme: {
-                  primary: '#4ade80',
-                  secondary: '#fff',
-                },
+            },
+            error: {
+              duration: 5000,
+              iconTheme: {
+                primary: '#ef4444',
+                secondary: '#fff',
               },
-              error: {
-                duration: 5000,
-                iconTheme: {
-                  primary: '#ef4444',
-                  secondary: '#fff',
-                },
-              },
-            }}
-          />
-        </AuthProvider>
-      </SearchProvider>
-    </QueryClientProvider>
+            },
+          }}
+        />
+      </AuthProvider>
+    </SearchProvider>
   );
 };
 

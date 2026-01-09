@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { supabase, fetchQuestionsService, addReplyService, markBestAnswerService } from '../api';
-import { useSearch } from '../contexts';
+import { useSearch } from '../contexts.jsx';
 import StartScreen from '../components/StartScreen';
 import QuestionCard from '../components/QuestionCard';
 

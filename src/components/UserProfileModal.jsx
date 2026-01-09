@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { X, Loader2, Activity } from 'lucide-react';
-import { supabase } from '../api';
 
 const UserProfileModal = ({ isOpen, onClose, userId, supabase }) => {
   const [profile, setProfile] = useState(null);

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { X, Trophy, Loader2, Crown } from 'lucide-react';
-import { supabase } from '../api';
 
 const LeaderboardModal = ({ isOpen, onClose, supabase }) => {
   const [leaders, setLeaders] = useState([]);
