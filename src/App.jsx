@@ -114,7 +114,7 @@ const AppInner = () => {
               language: data.language,
               category: data.category,
               author_name: user?.user_metadata?.full_name || user?.email || 'Anonymous',
-              author_id: user?.id || 'anonymous_' + Date.now(),
+              author_id: user?.id || null,
               xp_reward: 50
             });
 

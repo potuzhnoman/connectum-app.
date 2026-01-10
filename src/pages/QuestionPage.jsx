@@ -48,7 +48,7 @@ const QuestionPage = () => {
             question_id: questionId,
             text: text,
             author_name: session?.user?.user_metadata?.full_name || session?.user?.email || 'Anonymous',
-            author_id: session?.user?.id || 'anonymous_' + Date.now(),
+            author_id: session?.user?.id || null,
             avatar: session?.user?.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=Anonymous`
         };
 
